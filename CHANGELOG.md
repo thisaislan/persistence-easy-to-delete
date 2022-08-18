@@ -1,5 +1,8 @@
 # Changelog
 
+#### v1.0.0:
+- Tested and approved in a real big game 
+
 #### v0.3.2:
 - Remove the BinaryFormatter dependency
 - Rename PEDE folder to Pede
