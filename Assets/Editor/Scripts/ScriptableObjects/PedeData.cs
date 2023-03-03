@@ -10,9 +10,9 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
     /// <summary> ScriptableObject containing data used in editor by Pede and methods to handle them. </summary>
     [
         CreateAssetMenu(
-            fileName = Metadata.PedeDataScriptableObjectFileName,
-            menuName = Metadata.PedeDataScriptableObjectMenuName,
-            order = Metadata.PedeDataScriptableObjectOrder
+            fileName = Metadata.DataFileName,
+            menuName = Metadata.AssetMenuDataName,
+            order = Metadata.AssetMenuDataOrder
         )
     ]
     public class PedeData : ScriptableObject
@@ -39,7 +39,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             ///   <see cref="T:Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Data.PedeData.Data" />
             ///   value.
             /// </summary>
-            [TextArea(Metadata.PedeDataValueMinLines, Metadata.PedeDataValueMaxLines)]
+            [TextArea(Metadata.TextAreaDataMinLines, Metadata.TextAreaDataMaxLines)]
             public string value;
             
             /// <summary>

@@ -9,7 +9,8 @@ using UnityEngine;
 
 using Object = UnityEngine.Object;
 
-[assembly: InternalsVisibleTo(Metadata.PedeInternalsVisibleToAssemblyName)]
+
+[assembly: InternalsVisibleTo(Metadata.AssemblyName)]
 namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
 {
     internal static class PedeEditor
@@ -23,17 +24,18 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
             CheckFileData();
         }
 
-        #region StartRegion
+        #region SetRegion
         
         private static void CheckFileSettings()
         {
-            var settingsPath = $"{Metadata.PedeSettingFolderPath}/{Metadata.PedeSettingFileName}";
+            var settingsPath = $"{Metadata.SettingFolderPath}/{Metadata.SettingFullFileName}";
+          
+            pedeSettings = GetFile<PedeSettings>(settingsPath);
 
-            pedeSettings = AssetDatabase.LoadAssetAtPath<PedeSettings>(settingsPath);
-            
             if (pedeSettings == null)
             {
-                pedeSettings = CreateSettingsScriptableObjectAsset(Metadata.PedeSettingFolderPath, settingsPath);
+                pedeSettings = CreateSettingsScriptableObjectAsset(Metadata.SettingFolderPath, settingsPath);
+                PersistAsset(pedeSettings);
             }
         }
 
@@ -56,23 +58,30 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         private static void CreatAsset(Object asset, string path) =>
             AssetDatabase.CreateAsset(asset, path);
 
-        private static void PersistAsset(UnityEngine.Object scriptableObject)
+        private static void PersistAsset(Object scriptableObject)
         {
             EditorUtility.SetDirty(scriptableObject);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
 
-        private static void CheckFileData()
+        private static void CheckFileData(bool isASubstitution = false)
         {
+            var defaultDataPath = $"{Metadata.DataFolderPath}/{Metadata.DataFullFileName}";
+
+            if (isASubstitution)
+            {
+                CheckFileSettings();
+                InvalidateFileData(defaultDataPath);
+            }
+
             if (pedeSettings.pedeData == null)
             {
-                var dataPath = $"{Metadata.PedeDataFolderPath}/{Metadata.PedeDataFileName}";
-                var pedeData = AssetDatabase.LoadAssetAtPath<PedeData>(dataPath);
+                var pedeData = GetFileData(defaultDataPath);
                 
                 if (pedeData == null)
                 {
-                    pedeData = CreateDataScriptableObjectAsset(Metadata.PedeDataFolderPath, dataPath);
+                    pedeData = CreateDataScriptableObjectAsset(Metadata.DataFolderPath, defaultDataPath);
                 }
                 
                 pedeSettings.pedeData = pedeData;
@@ -80,11 +89,55 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
                 PersistAsset(pedeSettings);
             }
         }
+
+        private static void InvalidateFileData(string defaultDataPath)
+        {
+            pedeSettings.pedeData = null;
+            
+            if (GetFileData(defaultDataPath) != null)
+            {
+                RenameFileDataWithDefaultName(defaultDataPath);
+            }
+        }
+
+        private static PedeData GetFileData(string dataPath) =>
+            GetFile<PedeData>(dataPath);
+
+        private static PedeData CreateDataScriptableObjectAsset(string directoryPath, string filePath)
+        {
+            var data = CreateScriptableObjectAsset<PedeData>(directoryPath, filePath);
+            
+            PersistAsset(data);
+            
+            return data;
+        }
+
+        private static void RenameFileDataWithDefaultName(string defaultDataPath)
+        {
+            var name = "";
+            var result = "";
+            var index = 1;
+
+            do
+            {
+                name = $"{Metadata.DataOldFilePrefix}-" +
+                       $"{Metadata.DataFileName}" +
+                       $"({index})." +
+                       $"{Metadata.DataFilExtension}";
+
+                result = AssetDatabase.RenameAsset(defaultDataPath, name);
+
+                index++;
+                
+            } while (!string.IsNullOrEmpty(result));
+
+            PersistAsset(GetFile<PedeData>($"{Metadata.DataFolderPath}/{name}"));
+        }
         
-        private static PedeData CreateDataScriptableObjectAsset(string directoryPath, string filePath) =>
-            CreateScriptableObjectAsset<PedeData>(directoryPath, filePath);
-        
-        #endregion //StartRegion
+        private static T GetFile<T>(string path) where T : Object =>
+            AssetDatabase.LoadAssetAtPath<T>(path);
+
+        #endregion //SetRegion
         
         #region PlayerPrefsRegion
         
@@ -131,6 +184,32 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
             pedeData.HasFileKey<T>(key, actionWithResult);
 
         #endregion //FileRegion
+
+        #region UtilsRegion
+
+        internal static bool IsDataFileAccessible() =>
+            pedeSettings != null &&
+            pedeSettings.pedeData != null &&
+            pedeSettings.name == Metadata.SettingsFileName; 
+
+        internal static void CreateAnotherDataFile() =>
+            CheckFileData(true);
+
+        internal static void SelectDataFile()
+        {
+            if (IsDataFileAccessible()) { Selection.activeObject = pedeSettings.pedeData; }
+        }
+        
+        internal static void DeleteDataFile()
+        {
+            if (IsDataFileAccessible())
+            {
+                AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(pedeSettings.pedeData));
+                CreateAnotherDataFile();
+            }
+        }
+
+        #endregion //UtilsRegion
 
     }
 }

@@ -1,5 +1,9 @@
 # Changelog
 
+#### v1.1.0:
+- Add menu editor with new, open and delete data options
+- Add shortcut to open quickly data file in use
+
 #### v1.0.0:
 - Tested and approved in a real big game 
 
