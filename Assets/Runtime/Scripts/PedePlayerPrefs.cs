@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using UnityEngine;
 
 namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
@@ -6,7 +7,13 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
     internal static class PedePlayerPrefs
     {
         
-        internal static void DeletePlayerPrefsByKey(string key, bool shouldSaveImmediately)
+        private static readonly Type[] buildInTypes =
+        {
+            typeof(bool), typeof(byte), typeof(sbyte), typeof(char), typeof(decimal), typeof(double), typeof(float),
+            typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(short), typeof(ushort), typeof(string)
+        };
+        
+        internal static void DeletePlayerPrefs(string key, bool shouldSaveImmediately)
         {
             PlayerPrefs.DeleteKey(key);
 
@@ -50,26 +57,26 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
 
             if (playerPrefsGetMode != Pede.PlayerPrefsGetMode.Normal)
             {
-                DeletePlayerPrefsByKey(key, playerPrefsGetMode == Pede.PlayerPrefsGetMode.DestructiveAndPersistent);
+                var shouldSaveImmediately = playerPrefsGetMode == Pede.PlayerPrefsGetMode.DestructiveAndPersistent;
+                
+                DeletePlayerPrefs(key, shouldSaveImmediately);
             }
         }
         
         private static void SetPlayerPrefs<T>(string key, T value)
         {
-            //string
-            if (typeof(T) == typeof(String) || 
-                // Int
-                typeof(T) == typeof(Int32) ||
-                //bool
-                typeof(T) == typeof(Boolean) ||
-                //char
-                typeof(T) == typeof(Char) ||
-                //float
-                typeof(T) == typeof(Single))
+            if (buildInTypes.Contains(typeof(T)))
             {
-                SetPlayerPrefsStringValue(key, Convert.ToString(value));   
+                SetPlayerPrefsStringValue(key, Convert.ToString(value));
             }
-            //others
+            else if (typeof(T) == typeof(nint))
+            {
+                SetPlayerPrefsStringValue(key, Convert.ToString(value));
+            }
+            else if (typeof(T) == typeof(nuint))
+            {
+                SetPlayerPrefsStringValue(key, Convert.ToString(value));
+            }
             else
             {
                 SetPlayerPrefsStringValue(key, JsonUtility.ToJson(value));
@@ -81,20 +88,18 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             var value = PlayerPrefs.GetString(key, default);
             var decompressedValue = StringCompressor.DecompressString(value);
             
-            //string
-            if (typeof(T) == typeof(String) || 
-                // Int
-                typeof(T) == typeof(Int32) ||
-                //bool
-                typeof(T) == typeof(Boolean) ||
-                //char
-                typeof(T) == typeof(Char) ||
-                //float
-                typeof(T) == typeof(Single))
+            if (buildInTypes.Contains(typeof(T)))
             {
-                GetPlayerPrefsValue(decompressedValue, actionWithResult);   
+                GetPlayerPrefsValue(decompressedValue, actionWithResult);
             }
-            //others
+            else if (typeof(T) == typeof(nint))
+            {
+                GetPlayerPrefsNint(decompressedValue, actionWithResult as Action<nint>);
+            }
+            else if (typeof(T) == typeof(nuint))
+            {
+                GetPlayerPrefsUnint(decompressedValue, actionWithResult as Action<nuint>);
+            }
             else
             {
                 GetPlayerPrefsObject(decompressedValue, actionWithResult);
@@ -106,6 +111,12 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
 
         private static void GetPlayerPrefsValue<T>(string decompressedValue, Action<T> actionWithResult) =>
             actionWithResult.Invoke((T)Convert.ChangeType(decompressedValue, typeof(T)));
+        
+        private static void GetPlayerPrefsNint(string decompressedValue, Action<nint> actionWithResult) =>
+            actionWithResult.Invoke(Convert.ToInt32(decompressedValue));
+        
+        private static void GetPlayerPrefsUnint(string decompressedValue, Action<nuint> actionWithResult) =>
+            actionWithResult.Invoke(Convert.ToUInt32(decompressedValue));
 
         private static void SetPlayerPrefsStringValue(string key, string value) =>
             SetCompressedPlayerPrefs(key, StringCompressor.CompressString(value));

@@ -1,5 +1,10 @@
 # Changelog
 
+#### v2.0.0:
+- Add menu validation option on menu editor
+- Add PlayerPrefs support for all built-in C# types
+- Set properly encapsulation
+
 #### v1.1.0:
 - Add menu editor with new, open and delete data options
 - Add shortcut to open quickly data file in use

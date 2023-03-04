@@ -9,19 +9,22 @@ using UnityEngine;
 
 using Object = UnityEngine.Object;
 
-
 [assembly: InternalsVisibleTo(Metadata.AssemblyName)]
 namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
 {
     internal static class PedeEditor
     {
+        
         private static PedeSettings pedeSettings;
-        private static PedeData pedeData => pedeSettings.pedeData;
+        internal static PedeData pedeData => pedeSettings.pedeData;
 
         static PedeEditor()
         {
-            CheckFileSettings();
-            CheckFileData();
+            if (Application.isPlaying)
+            {
+                CheckFileSettings();
+                CheckFileData();
+            }
         }
 
         #region SetRegion
@@ -37,6 +40,13 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
                 pedeSettings = CreateSettingsScriptableObjectAsset(Metadata.SettingFolderPath, settingsPath);
                 PersistAsset(pedeSettings);
             }
+        }
+
+        private static void PersistAsset(Object scriptableObject)
+        {
+            EditorUtility.SetDirty(scriptableObject);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
 
         private static PedeSettings CreateSettingsScriptableObjectAsset(string folderPath, string settingsPath) =>
@@ -57,13 +67,6 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         
         private static void CreatAsset(Object asset, string path) =>
             AssetDatabase.CreateAsset(asset, path);
-
-        private static void PersistAsset(Object scriptableObject)
-        {
-            EditorUtility.SetDirty(scriptableObject);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-        }
 
         private static void CheckFileData(bool isASubstitution = false)
         {
@@ -120,20 +123,21 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
 
             do
             {
-                name = $"{Metadata.DataOldFilePrefix}-" +
-                       $"{Metadata.DataFileName}" +
-                       $"({index})." +
-                       $"{Metadata.DataFilExtension}";
-
+                name = GetWantedName(index);
                 result = AssetDatabase.RenameAsset(defaultDataPath, name);
-
                 index++;
                 
             } while (!string.IsNullOrEmpty(result));
 
             PersistAsset(GetFile<PedeData>($"{Metadata.DataFolderPath}/{name}"));
         }
-        
+
+        private static string GetWantedName(int index) =>
+            $"{Metadata.DataOldFilePrefix}-" +
+            $"{Metadata.DataFileName}" +
+            $"({index})." +
+            $"{Metadata.DataFilExtension}";
+
         private static T GetFile<T>(string path) where T : Object =>
             AssetDatabase.LoadAssetAtPath<T>(path);
 
@@ -186,20 +190,34 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         #endregion //FileRegion
 
         #region UtilsRegion
-
-        internal static bool IsDataFileAccessible() =>
-            pedeSettings != null &&
-            pedeSettings.pedeData != null &&
-            pedeSettings.name == Metadata.SettingsFileName; 
-
+        
+        internal static void DeleteAll() =>
+            pedeData.DeleteAll();
+        
         internal static void CreateAnotherDataFile() =>
             CheckFileData(true);
-
+        
         internal static void SelectDataFile()
         {
             if (IsDataFileAccessible()) { Selection.activeObject = pedeSettings.pedeData; }
         }
-        
+
+        internal static bool IsDataFileAccessible()
+        {
+            if (pedeSettings != null)
+            {
+                return pedeSettings.pedeData != null &&
+                       pedeSettings.name == Metadata.SettingsFileName;
+                
+            }
+            else
+            {
+                CheckFileSettings();
+                
+                return pedeSettings.pedeData != null;
+            }
+        }
+
         internal static void DeleteDataFile()
         {
             if (IsDataFileAccessible())
@@ -208,6 +226,9 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
                 CreateAnotherDataFile();
             }
         }
+
+        internal static bool IsDataValid(PedeData.ValidationErrorHandler validationErrorHandler) =>
+            IsDataFileAccessible() && pedeData.IsDataValid(validationErrorHandler);
 
         #endregion //UtilsRegion
 

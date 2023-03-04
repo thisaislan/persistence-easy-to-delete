@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Constants;
 using UnityEditor;
@@ -7,7 +8,6 @@ using UnityEngine;
 
 namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Data
 {
-    /// <summary> ScriptableObject containing data used in editor by Pede and methods to handle them. </summary>
     [
         CreateAssetMenu(
             fileName = Metadata.DataFileName,
@@ -15,67 +15,38 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             order = Metadata.AssetMenuDataOrder
         )
     ]
-    public class PedeData : ScriptableObject
+    internal class PedeData : ScriptableObject
     {
-        /// <summary> Struct that stores information to be saved and used in editor by Pede. </summary>
+        
         [Serializable]
-        public struct Data
+        internal struct Data
         {
-            /// <summary>
-            ///   Key used to identify
-            ///   <see cref="T:Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Data.PedeData.Data" />.
-            /// </summary>
-            public string key; 
+            [SerializeField]
+            internal string key;
             
-            /// <summary>
-            ///   The
-            ///   <see cref="T:Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Data.PedeData.Data" />.
-            ///   type.
-            /// </summary>
-            public string type;
+            [SerializeField]
+            internal string type;
             
-            /// <summary>
-            ///   Serialized
-            ///   <see cref="T:Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Data.PedeData.Data" />
-            ///   value.
-            /// </summary>
+            [SerializeField]
             [TextArea(Metadata.TextAreaDataMinLines, Metadata.TextAreaDataMaxLines)]
-            public string value;
+            internal string value;
             
-            /// <summary>
-            ///   Checks if
-            ///   <see cref="T:Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Data.PedeData.Data" />
-            ///   key is null.
-            /// </summary>
-            public bool IsKeyNull() =>
+            internal bool IsKeyNull() =>
                 key == null;
             
-            /// <summary> Checks if
-            ///   <see cref="T:Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Data.PedeData.Data" />
-            ///   key and type are equals to <paramref name="key"/> and <paramref name="type"/> passed.
-            /// </summary>
-            /// <param name="key"> Key used to the comparison. </param>
-            /// <param name="tyoe"> Type used to the comparison. </param>
-            public bool IsSameValue(string key, string type) =>
+            internal bool IsSameValue(string key, string type) =>
                 this.key.Equals(key) && this.type.Equals(type);
         }
         
-        /// <summary> Stores all PlayerPrefs data used in editor. </summary>
-        public List<Data> playerPrefData = new List<Data>();
+        [SerializeField]
+        internal List<Data> playerPrefData = new List<Data>();
         
-        /// <summary> Stores all File data used in editor. </summary>
-        public List<Data>  fileData = new List<Data>();
-
+        [SerializeField]
+        internal List<Data> fileData = new List<Data>();
+        
         #region PlayerPrefsRegion
         
-        /// <summary> Saves PlayerPrefs data with a specific key, type and value. </summary>
-        /// <param name="key"> Key used to set the PlayerPrefs. It cannot be null. </param>
-        /// <param name="value"> Value to be saved. It cannot be null. </param>
-        /// <remarks> It cannot save engine type objects</remarks>
-        /// <exception cref="ArgumentNullException">
-        ///   Key and value cannot be null.
-        /// </exception>
-        public void SetPlayerPrefs<T>(string key, T value)
+        internal void SetPlayerPrefs<T>(string key, T value)
         {
             CheckKeyAsNull(key);
             CheckValueAsNull(value);
@@ -97,19 +68,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             PersistAsset();
         }
 
-        /// <summary> Loads PlayerPrefs data with a specific key and type. </summary>
-        /// <param name="key"> Key used to get the PlayerPrefs. </param>
-        /// <param name="actionIfHasResult">
-        ///   Action that will be performed if the PlayerPrefs exists.
-        /// </param>
-        /// <param name="actionIfHasNotResult">
-        ///   Action that will be performed if the PlayerPrefs does not exist. Default is null
-        /// </param>
-        /// <param name="destroyAfter"> If true, deletes file after. Default is false </param>
-        /// <exception cref="ArgumentNullException">
-        ///   Key and actionIfHasResult cannot be null.
-        /// </exception>
-        public void GetPlayerPrefs<T>(
+        internal void GetPlayerPrefs<T>(
             string key,
             Action<T> actionIfHasResult,
             Action actionIfHasNotResult = null,
@@ -132,31 +91,19 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             }
         }
 
-        /// <summary> Deletes PlayerPrefs data with a specific key and type. </summary>
-        /// <param name="key"> Key used to delete the PlayerPrefs. </param>
-        /// <exception cref="ArgumentNullException">
-        ///   Key cannot be null.
-        /// </exception>
-        public void DeletePlayerPrefs<T>(string key)
+        internal void DeletePlayerPrefs<T>(string key)
         {
             RemovePlayerPrefsData<T>(key);
             PersistAsset();
         }
-
-        /// <summary> Deletes all PlayerPrefs key and values by calling PlayerPrefs.DeleteAll() </summary>
-        public void DeleteAllPlayerPrefs()
+        
+        internal void DeleteAllPlayerPrefs()
         {
             playerPrefData.Clear();
             PersistAsset();
         }
 
-        /// <summary> Returns true if the given key exists in PlayerPrefs data, otherwise returns false. </summary>
-        /// <param name="key"> Key used to check the PlayerPrefs. </param>
-        /// <param name="actionWithResult"> Action that will be performed with the result. </param>
-        /// <exception cref="ArgumentNullException">
-        ///   Key and actionWithResult cannot be null.
-        /// </exception>
-        public void HasPlayerPrefsKey<T>(string key, Action<bool> actionWithResult)
+        internal void HasPlayerPrefsKey<T>(string key, Action<bool> actionWithResult)
         {
             CheckKeyAsNull(key);
             CheckActionAsNull(actionWithResult);
@@ -174,66 +121,57 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
         
         private string GetPlayerPrefsValue<T>(T value)
         {
-            //string
-            if (typeof(T) == typeof(String)) { return Convert.ToString(value); }
-            //int
-            else if (typeof(T) == typeof(Int32)) { return Convert.ToString(value); }
-            //bool
-            else if (typeof(T) == typeof(Boolean)) { return Convert.ToString(value); }
-            //char
-            else if (typeof(T) == typeof(Char)) { return Convert.ToString(value); }
-            //float
-            else if (typeof(T) == typeof(Single)) { return Convert.ToString(value); }
-            //others
-            else { return JsonUtility.ToJson(value, true); }
+            if (Metadata.BuildInTypes.Contains(typeof(T)))
+            {
+                return Convert.ToString(value);
+            }
+            else if (typeof(T) == typeof(nint))
+            {
+                return Convert.ToString(value);
+            }
+            else if (typeof(T) == typeof(nuint))
+            {
+                return Convert.ToString(value);
+            }
+            else
+            {
+                return JsonUtility.ToJson(value, true);
+            }
         }
 
         private void GetPlayerPrefsData<T>(string value, Action<T> actionWithResult)
         {
-            //string
-            if (typeof(T) == typeof(String))
+            if (Metadata.BuildInTypes.Contains(typeof(T)))
             {
-                GetStringPlayerPrefs(value, actionWithResult as Action<string>);
+                GetBuildInTypePlayerPrefs(value, actionWithResult);
             }
-            //int
-            else if (typeof(T) == typeof(Int32))
+            else if (typeof(T) == typeof(nint))
             {
-                GetIntPlayerPrefs(Convert.ToInt32(value), actionWithResult as Action<int>);
+                GetNintPlayerPrefs(Convert.ToInt32(value), actionWithResult as Action<nint>);
             }
-            //bool
-            else if (typeof(T) == typeof(Boolean))
+            else if (typeof(T) == typeof(nuint))
             {
-                GetBooleanPlayerPrefs(Convert.ToBoolean(value), actionWithResult as Action<bool>);
+                GetUnintPlayerPrefs(Convert.ToUInt32(value), actionWithResult as Action<nuint>);
             }
-            //char
-            else if (typeof(T) == typeof(Char))
-            {
-                GetCharPlayerPrefs(value, actionWithResult as Action<char>);
-            }
-            //float
-            else if (typeof(T) == typeof(Single))
-            {
-                GetFloatPlayerPrefs(Convert.ToSingle(value), actionWithResult as Action<Single>);
-            }
-            //others
             else
             {
                 GetObject(JsonUtility.FromJson<T>(value), actionWithResult);
             }
         }
-        
-        private void GetStringPlayerPrefs(string value, Action<string> actionWithResult) =>
+
+        private void GetBuildInTypePlayerPrefs<T>(string value, Action<T> actionWithResult) =>
+            actionWithResult.Invoke(GetConvertedBuildInType<T>(value));
+
+        private T GetConvertedBuildInType<T>(string value)
+        {
+            var typeConverter = TypeDescriptor.GetConverter(typeof(T));
+            return (T)typeConverter.ConvertFromString(value);
+        }
+
+        private void GetNintPlayerPrefs(nint value, Action<nint> actionWithResult) =>
             actionWithResult.Invoke(value);
 
-        private void GetIntPlayerPrefs(int value, Action<int> actionWithResult) =>
-            actionWithResult.Invoke(value);
-
-        private void GetBooleanPlayerPrefs(bool value, Action<bool> actionWithResult) =>
-            actionWithResult.Invoke(value);
-        private void GetCharPlayerPrefs(string value, Action<char> actionWithResult) =>
-            actionWithResult.Invoke(value.First());
-
-        private void GetFloatPlayerPrefs(float value, Action<float> actionWithResult) =>
+        private void GetUnintPlayerPrefs(nuint value, Action<nuint> actionWithResult) =>
             actionWithResult.Invoke(value);
 
         private Data GetFirstPlayerPrefsDataOrDefault<T>(string key) =>
@@ -242,18 +180,72 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
         private void RemovePlayerPrefsData<T>(string key) =>
             RemoveData(playerPrefData, key, GetTypeName(typeof(T)));
         
+        private bool IsPlayerPrefsDataValuesValid(ValidationErrorHandler validationErrorHandler)
+        {
+            var dataIsValid = true;
+
+            for (int index = 0; index < playerPrefData.Count; index++)
+            {
+                var data = playerPrefData[index];
+
+                if (!string.IsNullOrEmpty(data.type))
+                {
+                      try 
+                      {
+                        var type = Metadata.BuildInTypes.FirstOrDefault(type => GetTypeName(type).Equals(data.type));
+                        
+                        if (type != default)
+                        {
+                            if (type == typeof(bool)) { GetConvertedBuildInType<bool>(data.value); } 
+                            else if (type == typeof(byte)) { GetConvertedBuildInType<byte>(data.value); } 
+                            else if (type == typeof(sbyte)) { GetConvertedBuildInType<sbyte>(data.value); } 
+                            else if (type == typeof(char)) { GetConvertedBuildInType<char>(data.value); } 
+                            else if (type == typeof(decimal)) { GetConvertedBuildInType<decimal>(data.value); } 
+                            else if (type == typeof(double)) { GetConvertedBuildInType<double>(data.value); } 
+                            else if (type == typeof(float)) { GetConvertedBuildInType<float>(data.value); } 
+                            else if (type == typeof(int)) { GetConvertedBuildInType<int>(data.value); } 
+                            else if (type == typeof(uint)) { GetConvertedBuildInType<uint>(data.value); } 
+                            else if (type == typeof(long)) { GetConvertedBuildInType<long>(data.value); } 
+                            else if (type == typeof(ulong)) { GetConvertedBuildInType<ulong>(data.value); } 
+                            else if (type == typeof(short)) { GetConvertedBuildInType<short>(data.value); } 
+                            else if (type == typeof(ushort)) { GetConvertedBuildInType<ushort>(data.value); } 
+                            else if (type == typeof(string)) { GetConvertedBuildInType<string>(data.value); }
+                        }
+                        else if (data.type == GetTypeName(typeof(nint))) { Convert.ToInt32(data.value); }
+                        else if (data.type == GetTypeName(typeof(nuint))) { Convert.ToUInt32(data.value); }
+                        else { JsonUtility.FromJson<object>(data.value); }
+                      }
+                      catch
+                      {
+                          HasError(data.key, index);
+                      }
+                }
+                else
+                {
+                    HasError(data.key, index);
+                }
+            }
+            
+            void HasError(string keyInValidation, int index)
+            {
+                dataIsValid = false;
+                validationErrorHandler.HandleValueError(keyInValidation, index, false);
+            }
+
+            return dataIsValid;
+        }
+
+        private bool IsPlayerPrefsDataKeysValid(ValidationErrorHandler validationErrorHandler) =>
+            IsKeysValid(playerPrefData, validationErrorHandler, false);
+
+        private bool IsPlayerPrefsDataTypesValid(ValidationErrorHandler validationErrorHandler) =>
+            IsTypesValid(playerPrefData, validationErrorHandler, false);
+
         #endregion //PlayerPrefsRegion
         
         #region FileRegion
         
-        /// <summary> Saves file data with a specific key, type and value. </summary>
-        /// <param name="key"> Key used to set the file. </param>
-        /// <param name="value"> Object to be saved or a engine type. </param>
-        /// <remarks> It cannot save engine type objects. </remarks>
-        /// <exception cref="ArgumentNullException">
-        ///   Key and value cannot be null.
-        /// </exception>
-        public void SetFile<T>(string key, T value)
+        internal void SetFile<T>(string key, T value)
         {
             CheckKeyAsNull(key);
             CheckValueAsNull(value);
@@ -275,20 +267,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             PersistAsset();
         }
         
-        /// <summary> Loads file data with a specific key and type. </summary>
-        /// <param name="key"> Key used to get the file. </param>
-        /// <param name="actionIfHasResult">
-        ///   Action that will be performed if the file exists.
-        /// </param>
-        /// <param name="actionIfHasNotResult">
-        ///   Action that will be performed if the file does not exist. Default is null
-        /// </param>
-        /// <param name="destroyAfter"> If true, deletes file after. Default is false </param>
-        /// <remarks> It cannot save engine type objects</remarks>
-        /// <exception cref="ArgumentNullException">
-        ///   Key and actionIfHasResult cannot be null.
-        /// </exception>
-        public void GetFile<T>(
+        internal void GetFile<T>(
             string key,
             Action<T> actionIfHasResult,
             Action actionIfHasNotResult = null,
@@ -311,32 +290,20 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             }
         }
         
-        /// <summary> Deletes file data with a specific key and type. </summary>
-        /// <param name="key"> Key used to delete the file. </param>
-        /// <exception cref="ArgumentNullException">
-        ///   Key cannot be null.
-        /// </exception>
-        public void DeleteFile<T>(string key)
+        internal void DeleteFile<T>(string key)
         {
             CheckKeyAsNull(key);
             RemoveFile<T>(key);
             PersistAsset();
         }
         
-        /// <summary> Deletes all files data saved. </summary>
-        public void DeleteAllFiles()
+        internal void DeleteAllFiles()
         {
             fileData.Clear();
             PersistAsset();
         }
 
-        /// <summary> Checks if exists a file data with a specific key and type. </summary>
-        /// <param name="key"> Key used to save the file. </param>
-        /// <param name="actionWithResult"> Action that will be performed with the result. </param>
-        /// <exception cref="ArgumentNullException">
-        ///   Key and actionWithResult cannot be null.
-        /// </exception>
-        public void  HasFileKey<T>(string key, Action<bool> actionWithResult)
+        internal void  HasFileKey<T>(string key, Action<bool> actionWithResult)
         {
             CheckKeyAsNull(key);
             CheckActionAsNull(actionWithResult);
@@ -361,16 +328,115 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
                 value =  JsonUtility.ToJson(value, true)
             };
         
-        #endregion //FileRegion
+        private bool IsFileDataValuesValid(ValidationErrorHandler validationErrorHandler)
+        {
+            var dataIsValid = true;
+
+            for (int index = 0; index < fileData.Count; index++)
+            {
+                var data = fileData[index];
+
+                if (!string.IsNullOrEmpty(data.type))
+                {
+                    try { JsonUtility.FromJson<object>(data.value); }
+                    catch { HasError(data.key, index); }
+                }
+                else
+                {
+                    HasError(data.key, index);
+                }
+            }
+
+            void HasError(string keyInValidation, int index)
+            {
+                dataIsValid = false;
+                validationErrorHandler.HandleValueError(keyInValidation, index, true);
+            }
+            
+            return dataIsValid;
+        }
         
-        /// <summary> Deletes all saved data. </summary>
-        public void DeleteAll()
+        private bool IsFileDataKeysValid(ValidationErrorHandler validationErrorHandler) =>
+            IsKeysValid(fileData, validationErrorHandler, true);
+        
+        private bool IsFileDataTypesValid(ValidationErrorHandler validationErrorHandler) =>
+            IsTypesValid(fileData, validationErrorHandler, false);
+        
+        #endregion //FileRegion
+
+        #region UtilsRegion
+
+        internal void DeleteAll()
         {
             DeleteAllPlayerPrefs();
             DeleteAllFiles();
-            PersistAsset();
         }
+
+        internal bool IsDataValid(ValidationErrorHandler validationErrorHandler)
+        {
+            var isPlayerPrefsDataTypesValid = IsPlayerPrefsDataTypesValid(validationErrorHandler);
+            var isFileDataTypesValid = IsFileDataTypesValid(validationErrorHandler);
+            
+            var isPlayerPrefsValuesValid = IsPlayerPrefsDataValuesValid(validationErrorHandler);
+            var isFileDataValuesValid = IsFileDataValuesValid(validationErrorHandler);
+            
+            var isPlayerPrefsKeysValid = IsPlayerPrefsDataKeysValid(validationErrorHandler);
+            var isFileDataKeysValid = IsFileDataKeysValid(validationErrorHandler);
+            
+
+            return isPlayerPrefsValuesValid &&
+                   isFileDataValuesValid &&
+                   isPlayerPrefsKeysValid &&
+                   isFileDataKeysValid &&
+                   isPlayerPrefsDataTypesValid &&
+                   isFileDataTypesValid;
+        }
+
+        private bool IsKeysValid(List<Data> dataList, ValidationErrorHandler validationErrorHandler, bool isFileData)
+        {
+            var dataIsValid = true;
+
+            for (int index = 0; index < dataList.Count; index++)
+            {
+                var data = dataList[index];
+
+                if (string.IsNullOrEmpty(data.key))
+                {
+                    validationErrorHandler.HandleKeyError(data.value, index, isFileData, false);
+                    dataIsValid = false;
+                }
+
+                if (IsDuplicatedKey(data.key, dataList))
+                {
+                    validationErrorHandler.HandleKeyError(data.value, index, isFileData, true);
+                    dataIsValid = false;
+                }
+            }
+
+            return dataIsValid;
+        }
+
+        private bool IsDuplicatedKey(string key, List<Data> dataList) =>
+            dataList.FindAll(innerData => innerData.key == key).Count > 1;
         
+        private bool IsTypesValid(List<Data> dataList, ValidationErrorHandler validationErrorHandler, bool isFileData)
+        {
+            var dataIsValid = true;
+
+            for (int index = 0; index < dataList.Count; index++)
+            {
+                var data = dataList[index];
+
+                if (string.IsNullOrEmpty(data.type))
+                {
+                    validationErrorHandler.HandleTypeError(data.value, index, isFileData);
+                    dataIsValid = false;
+                }
+            }
+
+            return dataIsValid;
+        }
+
         private void GetObject<T>(T value, Action<T> actionIfHasResult) =>
             actionIfHasResult.Invoke(value);
         
@@ -405,6 +471,36 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             EditorUtility.SetDirty(this);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
+        }
+
+        #endregion //UtilsRegion
+        
+        internal class ValidationErrorHandler
+        {
+            private readonly Action<string, int, bool> ActionOnValidationIndividualValueError;
+            private readonly Action<string, int, bool, bool> ActionOnValidationIndividualKeyError;
+            private readonly Action<string, int, bool> ActionOnValidationIndividualTypeError;
+
+            internal ValidationErrorHandler(
+                Action<string, int, bool> actionOnValidationIndividualValueError,
+                Action<string, int, bool, bool> actionOnValidationIndividualKeyError,
+                Action<string, int, bool> actionOnValidationIndividualTypeError
+            )
+            {
+                this.ActionOnValidationIndividualValueError = actionOnValidationIndividualValueError;
+                this.ActionOnValidationIndividualKeyError = actionOnValidationIndividualKeyError;
+                this.ActionOnValidationIndividualTypeError = actionOnValidationIndividualTypeError;
+            }
+
+            internal void HandleValueError(string key, int index, bool isFileData) =>
+                ActionOnValidationIndividualValueError.Invoke(key, index, isFileData);
+            
+            internal void HandleKeyError(string key, int index, bool isFileData, bool isDuplicity) =>
+                ActionOnValidationIndividualKeyError.Invoke(key, index, isFileData, isDuplicity);
+            
+            internal void HandleTypeError(string key, int index, bool isFileData) =>
+                ActionOnValidationIndividualTypeError.Invoke(key, index, isFileData);
+
         }
 
     }

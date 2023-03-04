@@ -2,6 +2,12 @@
 
 Persistence easy to delete in editor, or just Pede, is a small library for easy saving and deleting common persistence in the unit editor.
 
+Pede allows us to use Unity's `PlayerPrefs` to persist`bool, byte, sbyte, char, decimal, double,float, int, uint, nint, nuint, long, ulong, short, ushort, string` and `object`, also abstracts the logic to persist object as `files`.      
+
+At runtime, all data saved by Pede is compressed to save space and to protect the data, a similar process is applied to all used keys.  
+
+When in the editor, Pede uses a ScriptableObject to store the data, this approach allows us to see and modify the data during development. Pede also provides us with features in the editor to easily manipulate and validate the data used in the test, these features can be accessed through the editor's menu.     
+
 Please note this is still in development! Check [Issues](https://github.com/thisaislan/persistence-easy-to-delete-in-editor/issues) for any current support issues or bugs that may exist!
 
 
@@ -68,7 +74,7 @@ Currently, this is what Pede does have
 | Deserialize                |         ✔️         |
 | SetPlayerPrefs             |         ✔️         |
 | GetPlayerPrefs             |         ✔️         |
-| DeletePlayerPrefsByKey     |         ✔️         |
+| DeletePlayerPrefs          |         ✔️         |
 | DeleteAllPlayerPrefs       |         ✔️         |
 | HasPlayerPrefsKey          |         ✔️         |
 | SavePlayerPrefs            |         ✔️         |

@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
 {
-    internal class PedeFile
+    internal static class PedeFile
     {
-
+        
         internal static void Serialize<T>(T value, Action<byte[]> actionAfterSerialize)
         {
             var compressedValue = GetCompressedStringValue(value);
@@ -50,7 +50,10 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             {
                 File.Open(filePath, FileMode.Open).Close();
                 
-                var decompressedValue = StringCompressor.DecompressString(DeserializeBytes(File.ReadAllBytes(filePath)));
+                var decompressedValue = StringCompressor.DecompressString(
+                    DeserializeBytes(File.ReadAllBytes(filePath))
+                    );
+                
                 var obj = JsonUtility.FromJson<T>(decompressedValue);
 
                 if (obj != null) { actionIfHasResult.Invoke(obj); }

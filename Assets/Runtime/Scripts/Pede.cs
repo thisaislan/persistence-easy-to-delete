@@ -116,14 +116,14 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         /// <exception cref="ArgumentNullException">
         ///   Key cannot be null.
         /// </exception>
-        public static void DeletePlayerPrefsByKey<T>(string key, bool shouldSaveImmediately = false)
+        public static void DeletePlayerPrefs<T>(string key, bool shouldSaveImmediately = false)
         {
             CheckKeyAsNull(key);
             
 #if UNITY_EDITOR
             PedeEditor.DeletePlayerPrefs<T>(key);
 #else
-            PedePlayerPrefs.DeletePlayerPrefsByKey(GetFormattedKey(key, typeof(T)), shouldSaveImmediately);
+            PedePlayerPrefs.DeletePlayerPrefs(GetFormattedKey(key, typeof(T)), shouldSaveImmediately);
 #endif
         }
 
@@ -199,7 +199,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         /// <exception cref="ArgumentNullException">
         ///   Key and value cannot be null.
         /// </exception>
-        public static void SetFile<T>(string key, T value) where T: class
+        public static void SetFile<T>(string key, T value) where T: class, new()
         {
             CheckKeyAsNull(key);
             CheckValueAsNull(value);
@@ -230,7 +230,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             string key,
             Action<T> actionIfHasResult,
             Action actionIfHasNotResult = null,
-            bool destroyAfter = false) where T: class
+            bool destroyAfter = false) where T: class, new()
         {
             CheckKeyAsNull(key);
             CheckActionAsNull(actionIfHasResult);
@@ -247,7 +247,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         /// <exception cref="ArgumentNullException">
         ///   Key cannot be null.
         /// </exception>
-        public static void DeleteFile<T>(string key) where T: class
+        public static void DeleteFile<T>(string key) where T: class, new()
         {
             CheckKeyAsNull(key);
             
@@ -274,7 +274,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         /// <exception cref="ArgumentNullException">
         ///   Key and actionWithResult cannot be null.
         /// </exception>
-        public static void HasFileKey<T>(string key, Action<bool> actionWithResult) where T: class
+        public static void HasFileKey<T>(string key, Action<bool> actionWithResult) where T: class, new()
         {
             CheckKeyAsNull(key);
             CheckActionAsNull(actionWithResult);
@@ -293,8 +293,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         public static void DeleteAll(bool shouldSaveImmediately = false)
         {
 #if UNITY_EDITOR
-            PedeEditor.DeleteAllPlayerPrefs();
-            PedeEditor.DeleteAllFiles();
+            PedeEditor.DeleteAll();
 #else
             PedePlayerPrefs.DeleteAllPlayerPrefs(shouldSaveImmediately);
             PedeFile.DeleteAllFiles();
