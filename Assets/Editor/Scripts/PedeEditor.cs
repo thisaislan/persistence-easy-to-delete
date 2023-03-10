@@ -1,30 +1,37 @@
 using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Data;
 using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Settings;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Constants;
+using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Metas;
 using System.Runtime.CompilerServices;
 using System;
 using System.IO;
+using Thisaislan.PersistenceEasyToDeleteInEditor.Interfaces;
 using UnityEditor;
 using UnityEngine;
 
 using Object = UnityEngine.Object;
 
-[assembly: InternalsVisibleTo(Metadata.AssemblyName)]
+[assembly: InternalsVisibleTo(Metadata.AssemblyNameInternalsVisibleTo)]
 namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
 {
     internal static class PedeEditor
     {
         
         private static PedeSettings pedeSettings;
-        internal static PedeData pedeData => pedeSettings.pedeData;
+        private static PedeData pedeData => pedeSettings.pedeData;
 
         static PedeEditor()
         {
             if (Application.isPlaying)
             {
-                CheckFileSettings();
-                CheckFileData();
+                CheckInitialization();
             }
+        }
+        
+        [InitializeOnLoadMethod]
+        static void CheckInitialization()
+        {
+            CheckFileSettings();
+            CheckFileData();
         }
 
         #region SetRegion
@@ -145,15 +152,17 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         
         #region PlayerPrefsRegion
         
-        internal static void SetPlayerPrefs<T>(string key, T value) =>
-            pedeData.SetPlayerPrefs(key, value);
+        internal static void SetPlayerPrefs<T>(string key, T value, ISerializer serializer) =>
+            pedeData.SetPlayerPrefs(key, value, serializer);
 
         internal static void GetPlayerPrefs<T>(
-            string key,
-            Action<T> actionIfHasResult,
-            Action actionIfHasNotResult,
-            bool destroyAfter) =>
-            pedeData.GetPlayerPrefs(key, actionIfHasResult, actionIfHasNotResult, destroyAfter);
+                string key,
+                Action<T> actionIfHasResult,
+                Action actionIfHasNotResult,
+                ISerializer serializer,                
+                bool destroyAfter
+            ) =>
+            pedeData.GetPlayerPrefs(key, actionIfHasResult, serializer, actionIfHasNotResult, destroyAfter);
 
         internal static void DeletePlayerPrefs<T>(string key) =>
             pedeData.DeletePlayerPrefs<T>(key);
@@ -168,15 +177,16 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         
         #region FileRegion
 
-        internal static void SetFile<T>(string key, T value) =>
-            pedeData.SetFile(key, value);
+        internal static void SetFile<T>(string key, T value, ISerializer serializer) =>
+            pedeData.SetFile(key, value, serializer);
 
         internal static void GetFile<T>(
             string key,
             Action<T> actionIfHasResult,
             Action actionIfHasNotResult,
+            ISerializer serializer,
             bool destroyAfter) =>
-            pedeData.GetFile(key, actionIfHasResult, actionIfHasNotResult, destroyAfter);
+            pedeData.GetFile(key, actionIfHasResult, serializer, actionIfHasNotResult, destroyAfter);
 
         internal static void DeleteFile<T>(string key) =>
             pedeData.DeleteFile<T>(key);
@@ -227,8 +237,15 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
             }
         }
 
-        internal static bool IsDataValid(PedeData.ValidationErrorHandler validationErrorHandler) =>
-            IsDataFileAccessible() && pedeData.IsDataValid(validationErrorHandler);
+        internal static bool IsDataValid(PedeData.ValidationDataErrorHandler validationDataErrorHandler) =>
+            IsDataFileAccessible() && pedeData.IsDataValid(validationDataErrorHandler, pedeSettings.GetCustomSerializer());
+        
+        internal static bool HasCustomSerializerFile() =>
+            pedeSettings.HasCustomSerializerFile();
+        
+        internal static bool IsCustomSerializerFileValid(
+            PedeSettings.ValidationSerializerErrorHandler validationSerializerErrorHandler) => 
+            pedeSettings.IsCustomSerializerFileValid(validationSerializerErrorHandler);
 
         #endregion //UtilsRegion
 

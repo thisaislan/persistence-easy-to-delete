@@ -1,30 +1,30 @@
 using System;
 using System.IO;
 using System.Text;
-using UnityEngine;
+using Thisaislan.PersistenceEasyToDeleteInEditor.Interfaces;
 
 namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
 {
     internal static class PedeFile
     {
         
-        internal static void Serialize<T>(T value, Action<byte[]> actionAfterSerialize)
+        internal static void Serialize<T>(T value, Action<byte[]> actionAfterSerialize, ISerializer serializer)
         {
-            var compressedValue = GetCompressedStringValue(value);
+            var compressedValue = GetCompressedStringValue(value, serializer);
             var bytes = SerializeBytes(compressedValue);
 
             actionAfterSerialize(bytes);
         }
 
-        public static void Deserialize<T>(byte[] value, Action<T> actionAfterDeserialize)
+        public static void Deserialize<T>(byte[] value, Action<T> actionAfterDeserialize, ISerializer serializer)
         {
             var decompressedValue = StringCompressor.DecompressString(DeserializeBytes(value));
-            var obj = JsonUtility.FromJson<T>(decompressedValue);
+            var obj = serializer.Deserialize<T>(decompressedValue);
 
             actionAfterDeserialize(obj);
         }
 
-        internal static void SetFile<T>(string key, T value)
+        internal static void SetFile<T>(string key, T value, ISerializer serializer)
         {
             var filePath = GetFullPath(key);
             
@@ -32,7 +32,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             
             File.Create(filePath).Close();
             
-            var compressedValue = GetCompressedStringValue(value);
+            var compressedValue = GetCompressedStringValue(value, serializer);
             var bytes = SerializeBytes(compressedValue);
             
             File.WriteAllBytes(filePath, bytes);
@@ -42,7 +42,9 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             string key,
             Action<T> actionIfHasResult,
             Action actionIfHasNotResult,
-            bool destroyAfter)
+            ISerializer serializer,
+            bool destroyAfter
+        )
         {
             var filePath = GetFullPath(key);
             
@@ -54,7 +56,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
                     DeserializeBytes(File.ReadAllBytes(filePath))
                     );
                 
-                var obj = JsonUtility.FromJson<T>(decompressedValue);
+                var obj = serializer.Deserialize<T>(decompressedValue);
 
                 if (obj != null) { actionIfHasResult.Invoke(obj); }
                 
@@ -87,9 +89,9 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
         internal static void HasFileKey(string key, Action<bool> actionWithResult) =>
             actionWithResult.Invoke(File.Exists(GetFullPath(key)));
 
-        private static string GetCompressedStringValue<T>(T value)
+        private static string GetCompressedStringValue<T>(T value, ISerializer serializer)
         {
-            var strigValue = JsonUtility.ToJson(value);
+            var strigValue = serializer.Serialize(value);
             
             return StringCompressor.CompressString(strigValue);
         }

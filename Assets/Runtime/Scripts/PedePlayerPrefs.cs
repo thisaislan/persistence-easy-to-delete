@@ -1,17 +1,13 @@
 using System;
 using System.Linq;
+using Thisaislan.PersistenceEasyToDeleteInEditor.Interfaces;
+using Thisaislan.PersistenceEasyToDeleteInEditor.Metas;
 using UnityEngine;
 
 namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
 {
     internal static class PedePlayerPrefs
     {
-        
-        private static readonly Type[] buildInTypes =
-        {
-            typeof(bool), typeof(byte), typeof(sbyte), typeof(char), typeof(decimal), typeof(double), typeof(float),
-            typeof(int), typeof(uint), typeof(long), typeof(ulong), typeof(short), typeof(ushort), typeof(string)
-        };
         
         internal static void DeletePlayerPrefs(string key, bool shouldSaveImmediately)
         {
@@ -33,9 +29,14 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
         internal static void SavePlayerPrefs() =>
             PlayerPrefs.Save();
 
-        internal static void SetPlayerPrefs<T>(string key, T value, Pede.PlayerPrefsSetMode playerPrefsSetMode)
+        internal static void SetPlayerPrefs<T>(
+            string key,
+            T value,
+            Pede.PlayerPrefsSetMode playerPrefsSetMode,
+            ISerializer serializer
+        )
         {
-            SetPlayerPrefs(key, value);
+            SetPlayerPrefs(key, value, serializer);
 
             if (playerPrefsSetMode != Pede.PlayerPrefsSetMode.Normal)
             {
@@ -47,12 +48,14 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             string key,
             Action<T> actionIfHasResult,
             Action actionIfHasNotResult,
-            Pede.PlayerPrefsGetMode playerPrefsGetMode)
+            Pede.PlayerPrefsGetMode playerPrefsGetMode,
+            ISerializer serializer
+        )
         {
             HasPlayerPrefsKey(key, (result) =>
             {
                 if (!result) { actionIfHasNotResult?.Invoke(); }
-                else { GetPlayerPrefs(key, actionIfHasResult); }
+                else { GetPlayerPrefs(key, actionIfHasResult, serializer); }
             });
 
             if (playerPrefsGetMode != Pede.PlayerPrefsGetMode.Normal)
@@ -63,9 +66,9 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             }
         }
         
-        private static void SetPlayerPrefs<T>(string key, T value)
+        private static void SetPlayerPrefs<T>(string key, T value, ISerializer serializer)
         {
-            if (buildInTypes.Contains(typeof(T)))
+            if (Metadata.BuildInTypes.Contains(typeof(T)))
             {
                 SetPlayerPrefsStringValue(key, Convert.ToString(value));
             }
@@ -79,16 +82,16 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             }
             else
             {
-                SetPlayerPrefsStringValue(key, JsonUtility.ToJson(value));
+                SetPlayerPrefsStringValue(key, serializer.Serialize(value));
             }
         }
         
-        private static void GetPlayerPrefs<T>(string key, Action<T> actionWithResult)
+        private static void GetPlayerPrefs<T>(string key, Action<T> actionWithResult, ISerializer serializer)
         {
             var value = PlayerPrefs.GetString(key, default);
             var decompressedValue = StringCompressor.DecompressString(value);
             
-            if (buildInTypes.Contains(typeof(T)))
+            if (Metadata.BuildInTypes.Contains(typeof(T)))
             {
                 GetPlayerPrefsValue(decompressedValue, actionWithResult);
             }
@@ -102,12 +105,16 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             }
             else
             {
-                GetPlayerPrefsObject(decompressedValue, actionWithResult);
+                GetPlayerPrefsObject(decompressedValue, actionWithResult, serializer);
             }
         }
 
-        private static void GetPlayerPrefsObject<T>(string decompressedValue, Action<T> actionWithResult) =>
-            actionWithResult.Invoke(JsonUtility.FromJson<T>(decompressedValue));
+        private static void GetPlayerPrefsObject<T>(
+                    string decompressedValue,
+                    Action<T> actionWithResult,
+                    ISerializer serializer
+                ) => 
+            actionWithResult.Invoke(serializer.Deserialize<T>(decompressedValue));
 
         private static void GetPlayerPrefsValue<T>(string decompressedValue, Action<T> actionWithResult) =>
             actionWithResult.Invoke((T)Convert.ChangeType(decompressedValue, typeof(T)));

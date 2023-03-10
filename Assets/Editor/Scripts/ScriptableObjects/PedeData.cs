@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Constants;
+using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Metas;
+using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Settings;
+using Thisaislan.PersistenceEasyToDeleteInEditor.Interfaces;
 using UnityEditor;
 using UnityEngine;
 
@@ -46,7 +48,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
         
         #region PlayerPrefsRegion
         
-        internal void SetPlayerPrefs<T>(string key, T value)
+        internal void SetPlayerPrefs<T>(string key, T value, ISerializer serializer)
         {
             CheckKeyAsNull(key);
             CheckValueAsNull(value);
@@ -58,11 +60,11 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
                 var index = playerPrefData.IndexOf(data);
                 
                 playerPrefData.Remove(data);
-                playerPrefData.Insert(index, CreatePlayerPrefsData(key, value));
+                playerPrefData.Insert(index, CreatePlayerPrefsData(key, value, serializer));
             }
             else
             {
-                playerPrefData.Add(CreatePlayerPrefsData(key, value));
+                playerPrefData.Add(CreatePlayerPrefsData(key, value, serializer));
             }
 
             PersistAsset();
@@ -71,8 +73,10 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
         internal void GetPlayerPrefs<T>(
             string key,
             Action<T> actionIfHasResult,
+            ISerializer serializer,
             Action actionIfHasNotResult = null,
-            bool destroyAfter = false)
+            bool destroyAfter = false
+            )
         {
             CheckKeyAsNull(key);
             CheckActionAsNull(actionIfHasResult);
@@ -81,7 +85,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
 
             if (!data.IsKeyNull())
             {
-                GetPlayerPrefsData(data.value,  actionIfHasResult);
+                GetPlayerPrefsData(data.value,  actionIfHasResult, serializer);
                 
                 if (destroyAfter) { DeletePlayerPrefs<T>(key); }
             }
@@ -111,15 +115,15 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             actionWithResult.Invoke(ExistsData(playerPrefData, key, GetTypeName(typeof(T))));
         }
 
-        private Data CreatePlayerPrefsData<T>(string key, T value) =>
+        private Data CreatePlayerPrefsData<T>(string key, T value, ISerializer serializer) =>
             new Data
             {
                 key = key,
                 type = GetTypeName(typeof(T)),
-                value = GetPlayerPrefsValue(value)
+                value = GetPlayerPrefsValue(value, serializer)
             };
         
-        private string GetPlayerPrefsValue<T>(T value)
+        private string GetPlayerPrefsValue<T>(T value, ISerializer serializer)
         {
             if (Metadata.BuildInTypes.Contains(typeof(T)))
             {
@@ -135,11 +139,11 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             }
             else
             {
-                return JsonUtility.ToJson(value, true);
+                return serializer.Serialize(value);
             }
         }
 
-        private void GetPlayerPrefsData<T>(string value, Action<T> actionWithResult)
+        private void GetPlayerPrefsData<T>(string value, Action<T> actionWithResult, ISerializer serializer)
         {
             if (Metadata.BuildInTypes.Contains(typeof(T)))
             {
@@ -155,7 +159,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             }
             else
             {
-                GetObject(JsonUtility.FromJson<T>(value), actionWithResult);
+                GetObject(serializer.Deserialize<T>(value), actionWithResult);
             }
         }
 
@@ -180,7 +184,10 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
         private void RemovePlayerPrefsData<T>(string key) =>
             RemoveData(playerPrefData, key, GetTypeName(typeof(T)));
         
-        private bool IsPlayerPrefsDataValuesValid(ValidationErrorHandler validationErrorHandler)
+        private bool IsPlayerPrefsDataValuesValid(
+            ValidationDataErrorHandler validationDataErrorHandler,
+            PedeSettings.CustomSerializer customSerializer
+        )
         {
             var dataIsValid = true;
 
@@ -213,7 +220,17 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
                         }
                         else if (data.type == GetTypeName(typeof(nint))) { Convert.ToInt32(data.value); }
                         else if (data.type == GetTypeName(typeof(nuint))) { Convert.ToUInt32(data.value); }
-                        else { JsonUtility.FromJson<object>(data.value); }
+                        else
+                        {
+                            if (customSerializer != null)
+                            {
+                                customSerializer.InvokeCustomDeserializeMethod<object>(data.value);
+                            }
+                            else
+                            {
+                                JsonUtility.FromJson<object>(data.value);
+                            }
+                        }
                       }
                       catch
                       {
@@ -229,23 +246,23 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             void HasError(string keyInValidation, int index)
             {
                 dataIsValid = false;
-                validationErrorHandler.HandleValueError(keyInValidation, index, false);
+                validationDataErrorHandler.HandleValueError(keyInValidation, index, false);
             }
 
             return dataIsValid;
         }
 
-        private bool IsPlayerPrefsDataKeysValid(ValidationErrorHandler validationErrorHandler) =>
-            IsKeysValid(playerPrefData, validationErrorHandler, false);
+        private bool IsPlayerPrefsDataKeysValid(ValidationDataErrorHandler validationDataErrorHandler) =>
+            IsKeysValid(playerPrefData, validationDataErrorHandler, false);
 
-        private bool IsPlayerPrefsDataTypesValid(ValidationErrorHandler validationErrorHandler) =>
-            IsTypesValid(playerPrefData, validationErrorHandler, false);
+        private bool IsPlayerPrefsDataTypesValid(ValidationDataErrorHandler validationDataErrorHandler) =>
+            IsTypesValid(playerPrefData, validationDataErrorHandler, false);
 
         #endregion //PlayerPrefsRegion
         
         #region FileRegion
         
-        internal void SetFile<T>(string key, T value)
+        internal void SetFile<T>(string key, T value, ISerializer serializer)
         {
             CheckKeyAsNull(key);
             CheckValueAsNull(value);
@@ -257,11 +274,11 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
                 var index = fileData.IndexOf(data);
                 
                 fileData.Remove(data);
-                fileData.Insert(index, CreateFileData(key, value));
+                fileData.Insert(index, CreateFileData(key, value, serializer));
             }
             else
             {
-                fileData.Add(CreateFileData(key, value));
+                fileData.Add(CreateFileData(key, value, serializer));
             }
 
             PersistAsset();
@@ -270,6 +287,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
         internal void GetFile<T>(
             string key,
             Action<T> actionIfHasResult,
+            ISerializer serializer,
             Action actionIfHasNotResult = null,
             bool destroyAfter = false)
         {
@@ -280,7 +298,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
 
             if (!data.IsKeyNull())
             {
-                GetFileData(data.value,  actionIfHasResult);
+                GetFileData(data.value,  actionIfHasResult, serializer);
                 
                 if (destroyAfter) { DeleteFile<T>(key); }
             }
@@ -314,21 +332,24 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
         private void RemoveFile<T>(string key) =>
             RemoveData(fileData, key, GetTypeName(typeof(T)));
         
-        private void GetFileData<T>(string value, Action<T> actionWithResult) =>
-            GetObject(JsonUtility.FromJson<T>(value), actionWithResult);
+        private void GetFileData<T>(string value, Action<T> actionWithResult, ISerializer serializer) =>
+            GetObject(serializer.Deserialize<T>(value), actionWithResult);
 
         private Data GetFirstFileDataOrDefault<T>(string key) =>
             GetFirstDataOrDefault(fileData, key, GetTypeName(typeof(T)));
         
-        private Data CreateFileData<T>(string key, T value) =>
+        private Data CreateFileData<T>(string key, T value, ISerializer serializer) =>
             new Data
             {
                 key = key,
                 type = GetTypeName(typeof(T)),
-                value =  JsonUtility.ToJson(value, true)
+                value =  serializer.Serialize(value)
             };
         
-        private bool IsFileDataValuesValid(ValidationErrorHandler validationErrorHandler)
+        private bool IsFileDataValuesValid(
+            ValidationDataErrorHandler validationDataErrorHandler,
+            PedeSettings.CustomSerializer customSerializer
+        )
         {
             var dataIsValid = true;
 
@@ -338,7 +359,17 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
 
                 if (!string.IsNullOrEmpty(data.type))
                 {
-                    try { JsonUtility.FromJson<object>(data.value); }
+                    try 
+                    { 
+                        if (customSerializer != null)
+                        {
+                            customSerializer.InvokeCustomDeserializeMethod<object>(data.value);
+                        }
+                        else
+                        {
+                            JsonUtility.FromJson<object>(data.value);
+                        }
+                    }
                     catch { HasError(data.key, index); }
                 }
                 else
@@ -350,17 +381,17 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             void HasError(string keyInValidation, int index)
             {
                 dataIsValid = false;
-                validationErrorHandler.HandleValueError(keyInValidation, index, true);
+                validationDataErrorHandler.HandleValueError(keyInValidation, index, true);
             }
             
             return dataIsValid;
         }
         
-        private bool IsFileDataKeysValid(ValidationErrorHandler validationErrorHandler) =>
-            IsKeysValid(fileData, validationErrorHandler, true);
+        private bool IsFileDataKeysValid(ValidationDataErrorHandler validationDataErrorHandler) =>
+            IsKeysValid(fileData, validationDataErrorHandler, true);
         
-        private bool IsFileDataTypesValid(ValidationErrorHandler validationErrorHandler) =>
-            IsTypesValid(fileData, validationErrorHandler, false);
+        private bool IsFileDataTypesValid(ValidationDataErrorHandler validationDataErrorHandler) =>
+            IsTypesValid(fileData, validationDataErrorHandler, false);
         
         #endregion //FileRegion
 
@@ -372,16 +403,19 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             DeleteAllFiles();
         }
 
-        internal bool IsDataValid(ValidationErrorHandler validationErrorHandler)
+        internal bool IsDataValid(
+            ValidationDataErrorHandler validationDataErrorHandler,
+            PedeSettings.CustomSerializer customSerializer
+        )   
         {
-            var isPlayerPrefsDataTypesValid = IsPlayerPrefsDataTypesValid(validationErrorHandler);
-            var isFileDataTypesValid = IsFileDataTypesValid(validationErrorHandler);
+            var isPlayerPrefsDataTypesValid = IsPlayerPrefsDataTypesValid(validationDataErrorHandler);
+            var isFileDataTypesValid = IsFileDataTypesValid(validationDataErrorHandler);
             
-            var isPlayerPrefsValuesValid = IsPlayerPrefsDataValuesValid(validationErrorHandler);
-            var isFileDataValuesValid = IsFileDataValuesValid(validationErrorHandler);
+            var isPlayerPrefsValuesValid = IsPlayerPrefsDataValuesValid(validationDataErrorHandler, customSerializer);
+            var isFileDataValuesValid = IsFileDataValuesValid(validationDataErrorHandler, customSerializer);
             
-            var isPlayerPrefsKeysValid = IsPlayerPrefsDataKeysValid(validationErrorHandler);
-            var isFileDataKeysValid = IsFileDataKeysValid(validationErrorHandler);
+            var isPlayerPrefsKeysValid = IsPlayerPrefsDataKeysValid(validationDataErrorHandler);
+            var isFileDataKeysValid = IsFileDataKeysValid(validationDataErrorHandler);
             
 
             return isPlayerPrefsValuesValid &&
@@ -392,7 +426,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
                    isFileDataTypesValid;
         }
 
-        private bool IsKeysValid(List<Data> dataList, ValidationErrorHandler validationErrorHandler, bool isFileData)
+        private bool IsKeysValid(List<Data> dataList, ValidationDataErrorHandler validationDataErrorHandler, bool isFileData)
         {
             var dataIsValid = true;
 
@@ -402,13 +436,13 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
 
                 if (string.IsNullOrEmpty(data.key))
                 {
-                    validationErrorHandler.HandleKeyError(data.value, index, isFileData, false);
+                    validationDataErrorHandler.HandleKeyError(data.value, index, isFileData, false);
                     dataIsValid = false;
                 }
 
                 if (IsDuplicatedKey(data.key, dataList))
                 {
-                    validationErrorHandler.HandleKeyError(data.value, index, isFileData, true);
+                    validationDataErrorHandler.HandleKeyError(data.value, index, isFileData, true);
                     dataIsValid = false;
                 }
             }
@@ -419,7 +453,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
         private bool IsDuplicatedKey(string key, List<Data> dataList) =>
             dataList.FindAll(innerData => innerData.key == key).Count > 1;
         
-        private bool IsTypesValid(List<Data> dataList, ValidationErrorHandler validationErrorHandler, bool isFileData)
+        private bool IsTypesValid(List<Data> dataList, ValidationDataErrorHandler validationDataErrorHandler, bool isFileData)
         {
             var dataIsValid = true;
 
@@ -429,7 +463,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
 
                 if (string.IsNullOrEmpty(data.type))
                 {
-                    validationErrorHandler.HandleTypeError(data.value, index, isFileData);
+                    validationDataErrorHandler.HandleTypeError(data.value, index, isFileData);
                     dataIsValid = false;
                 }
             }
@@ -475,13 +509,13 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
 
         #endregion //UtilsRegion
         
-        internal class ValidationErrorHandler
+        internal class ValidationDataErrorHandler
         {
             private readonly Action<string, int, bool> ActionOnValidationIndividualValueError;
             private readonly Action<string, int, bool, bool> ActionOnValidationIndividualKeyError;
             private readonly Action<string, int, bool> ActionOnValidationIndividualTypeError;
 
-            internal ValidationErrorHandler(
+            internal ValidationDataErrorHandler(
                 Action<string, int, bool> actionOnValidationIndividualValueError,
                 Action<string, int, bool, bool> actionOnValidationIndividualKeyError,
                 Action<string, int, bool> actionOnValidationIndividualTypeError

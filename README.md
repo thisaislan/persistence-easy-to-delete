@@ -70,6 +70,7 @@ If you need more information about installing package from a Git URL, you can cl
 Currently, this is what Pede does have
 | Features                   |       Status      |
 | -------------------------- | :----------------:|
+| SetCustomSerializer        |         ✔️         |
 | Serialize                  |         ✔️         |
 | Deserialize                |         ✔️         |
 | SetPlayerPrefs             |         ✔️         |
@@ -92,7 +93,7 @@ Please submit any queries, bugs or issues, to the [Issues](https://github.com/th
 
 ## Note
 
-Pede uses JsonUtility this way it has all the limitations of that library.
+By default Pede uses JsonUtility so it has all the limitations of that library. If you want to change the serializer class, check the `SetCustomSerializer` method and also the `Custom Serializer` field in the PedeSettings file. 
 
 
 ## Thanks

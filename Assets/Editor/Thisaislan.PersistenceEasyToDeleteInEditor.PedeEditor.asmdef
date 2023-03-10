@@ -1,6 +1,8 @@
 {
     "name": "Thisaislan.PersistenceEasyToDeleteInEditor.PedeEditor",
-    "references": [],
+    "references": [
+        "Thisaislan.PersistenceEasyToDeleteInEditor.Pede.Interfaces"
+    ],
     "includePlatforms": [
         "Editor"
     ],

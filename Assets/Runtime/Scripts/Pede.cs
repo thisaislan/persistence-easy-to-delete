@@ -1,4 +1,5 @@
 using System;
+using Thisaislan.PersistenceEasyToDeleteInEditor.Interfaces;
 using Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition;
 
 #if UNITY_EDITOR
@@ -33,6 +34,32 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             /// <summary> Indicates a persist action on disk after setting it. </summary>
             Persistent
         }
+        
+        private static ISerializer serializer = new PedeDefaultSerializer();
+        
+        #region SerializerRegion
+
+        /// <summary> Sets a custom serializer to be used on Pede . </summary>
+        /// <param name="customSerializer"> Serialize class to be used. That class should implements
+        /// <see cref="T:Thisaislan.PersistenceEasyToDeleteInEditor.Interfaces.ISerializer" /> interface. </param>
+        /// <remarks>
+        ///   By default Pede uses <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
+        ///   To set a new serializer class use
+        /// <see cref="Thisaislan.PersistenceEasyToDeleteInEditor.Pede.SetCustomSerializer(ISerializer)"/> method.
+        ///   If the project uses a custom serializer class maybe will be useful set that class at PedeSettings to be
+        ///   also used on the validation flow.
+        /// </remarks>
+        /// <exception cref="ArgumentNullException">
+        ///   CustomSerializer cannot be null.
+        /// </exception>
+        public static void SetCustomSerializer(ISerializer customSerializer)
+        {
+            CheckArgumentAsNull(customSerializer, nameof(customSerializer));
+            
+            Pede.serializer = customSerializer;
+        }
+
+        #endregion //SerializerRegion
 
         #region PlayerPrefsRegion
         
@@ -45,7 +72,9 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         ///  Default  PlayerPrefsSetMode.Normal
         /// </param>
         /// <remarks>
-        ///   This method may us <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
+        ///   By default Pede uses <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
+        ///   To set a new serializer class use
+        /// <see cref="Thisaislan.PersistenceEasyToDeleteInEditor.Pede.SetCustomSerializer(ISerializer)"/> method.
         /// </remarks>
         /// <exception cref="ArgumentNullException">
         ///   Key and value cannot be null.
@@ -53,15 +82,16 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         public static void SetPlayerPrefs<T>(
             string key,
             T value,
-            PlayerPrefsSetMode playerPrefsSetMode = PlayerPrefsSetMode.Normal)
+            PlayerPrefsSetMode playerPrefsSetMode = PlayerPrefsSetMode.Normal
+        )
         {
             CheckKeyAsNull(key);
             CheckValueAsNull(value);
             
 #if UNITY_EDITOR
-            PedeEditor.SetPlayerPrefs(key, value);
+            PedeEditor.SetPlayerPrefs(key, value, serializer);
 #else
-            PedePlayerPrefs.SetPlayerPrefs(GetFormattedKey(key, typeof(T)), value, playerPrefsSetMode);
+            PedePlayerPrefs.SetPlayerPrefs(GetFormattedKey(key, typeof(T)), value, playerPrefsSetMode, serializer);
 #endif
         }
 
@@ -79,7 +109,9 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         ///  Default PlayerPrefsGetMode.Normal
         /// </param>
         /// <remarks>
-        ///   This method may us <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
+        ///   By default Pede uses <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
+        ///   To set a new serializer class use
+        /// <see cref="Thisaislan.PersistenceEasyToDeleteInEditor.Pede.SetCustomSerializer(ISerializer)"/> method.
         /// </remarks>
         /// <exception cref="ArgumentNullException">
         ///   Key and actionIfHasResult cannot be null.
@@ -98,15 +130,17 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
                     key,
                     actionIfHasResult,
                     actionIfHasNotResult,
+                    serializer,
                     playerPrefsGetMode != PlayerPrefsGetMode.Normal
                 );
 #else
             PedePlayerPrefs.GetPlayerPrefs(
                     GetFormattedKey(key, typeof(T)), 
-                    actionIfHasResult, 
-                    actionIfHasNotResult, 
-                    playerPrefsGetMode
-                );
+                        actionIfHasResult, 
+                        actionIfHasNotResult, 
+                        playerPrefsGetMode,
+                        serializer
+                    );  
 #endif
         }
 
@@ -176,7 +210,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             CheckValueAsNull(value);
             CheckActionAsNull(actionAfterSerialize);
             
-            PedeFile.Serialize(value, actionAfterSerialize);
+            PedeFile.Serialize(value, actionAfterSerialize, serializer);
         }
         
         /// <summary> Decompress and deserialize a object. </summary>
@@ -187,27 +221,29 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             CheckValueAsNull(value);
             CheckActionAsNull(actionAfterDeserialize);
             
-            PedeFile.Deserialize<T>(value, actionAfterDeserialize);
+            PedeFile.Deserialize<T>(value, actionAfterDeserialize, serializer);
         }
 
         /// <summary> Saves file with a specific key, type and value. </summary>
         /// <param name="key"> Key used to set the file. </param>
         /// <param name="value"> Object to be saved or a engine type. </param>
         /// <remarks>
-        ///   This method may us <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
+        ///   By default Pede uses <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
+        ///   To set a new serializer class use
+        /// <see cref="Thisaislan.PersistenceEasyToDeleteInEditor.Pede.SetCustomSerializer(ISerializer)"/> method.
         /// </remarks>
         /// <exception cref="ArgumentNullException">
         ///   Key and value cannot be null.
         /// </exception>
-        public static void SetFile<T>(string key, T value) where T: class, new()
+        public static void SetFile<T>(string key, T value) where T: new()
         {
             CheckKeyAsNull(key);
             CheckValueAsNull(value);
             
 #if UNITY_EDITOR
-            PedeEditor.SetFile(key, value);
+            PedeEditor.SetFile(key, value, serializer);
 #else
-            PedeFile.SetFile(GetFormattedKey(key, typeof(T)), value);
+            PedeFile.SetFile(GetFormattedKey(key, typeof(T)), value, serializer);
 #endif
         }
         
@@ -221,7 +257,9 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         /// </param>
         /// <param name="destroyAfter"> If true, deletes file after. Default is false </param>
         /// <remarks>
-        ///   This method may us <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
+        ///   By default Pede uses <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
+        ///   To set a new serializer class use
+        /// <see cref="Thisaislan.PersistenceEasyToDeleteInEditor.Pede.SetCustomSerializer(ISerializer)"/> method.
         /// </remarks>
         /// <exception cref="ArgumentNullException">
         ///   Key and actionIfHasResult cannot be null.
@@ -230,15 +268,21 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             string key,
             Action<T> actionIfHasResult,
             Action actionIfHasNotResult = null,
-            bool destroyAfter = false) where T: class, new()
+            bool destroyAfter = false) where T: new()
         {
             CheckKeyAsNull(key);
             CheckActionAsNull(actionIfHasResult);
             
 #if UNITY_EDITOR
-            PedeEditor.GetFile(key, actionIfHasResult, actionIfHasNotResult, destroyAfter);
+            PedeEditor.GetFile(key, actionIfHasResult, actionIfHasNotResult, serializer, destroyAfter);
 #else
-            PedeFile.GetFile(GetFormattedKey(key, typeof(T)), actionIfHasResult, actionIfHasNotResult, destroyAfter);
+            PedeFile.GetFile(
+                    GetFormattedKey(key, typeof(T)),
+                    actionIfHasResult,
+                    actionIfHasNotResult,
+                    serializer,
+                    destroyAfter
+                );
 #endif
         }
 
@@ -247,7 +291,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         /// <exception cref="ArgumentNullException">
         ///   Key cannot be null.
         /// </exception>
-        public static void DeleteFile<T>(string key) where T: class, new()
+        public static void DeleteFile<T>(string key) where T: new()
         {
             CheckKeyAsNull(key);
             
@@ -274,7 +318,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         /// <exception cref="ArgumentNullException">
         ///   Key and actionWithResult cannot be null.
         /// </exception>
-        public static void HasFileKey<T>(string key, Action<bool> actionWithResult) where T: class, new()
+        public static void HasFileKey<T>(string key, Action<bool> actionWithResult) where T: new()
         {
             CheckKeyAsNull(key);
             CheckActionAsNull(actionWithResult);

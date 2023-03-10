@@ -1,5 +1,9 @@
 # Changelog
 
+#### v2.1.0:
+- Add method to define a custom serializer class to be used at runtime
+- Add way to use custom serializer on validation by set on PedeSettings
+
 #### v2.0.0:
 - Add menu validation option on menu editor
 - Add PlayerPrefs support for all built-in C# types

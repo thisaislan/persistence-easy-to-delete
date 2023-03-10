@@ -2,14 +2,12 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
+using Thisaislan.PersistenceEasyToDeleteInEditor.Metas;
 
 namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
 {
     internal static class StringCompressor
     {
-        
-        private const int Offset = 0;
-        private const int DistOffset = 4;
         
         internal static string CompressString(string text)
         {
@@ -18,18 +16,25 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             
             using (var gZipStream = new GZipStream(memoryStream, CompressionMode.Compress, true))
             {
-                gZipStream.Write(buffer, Offset, buffer.Length);
+                gZipStream.Write(buffer, Metadata.ByteOffset, buffer.Length);
             }
 
             memoryStream.Position = 0;
 
             var compressedData = new byte[memoryStream.Length];
-            memoryStream.Read(compressedData, Offset, compressedData.Length);
+            memoryStream.Read(compressedData, Metadata.ByteOffset, compressedData.Length);
 
-            var gZipBuffer = new byte[compressedData.Length + DistOffset];
+            var gZipBuffer = new byte[compressedData.Length + Metadata.ByteDistOffset];
             
-            Buffer.BlockCopy(compressedData, Offset, gZipBuffer, DistOffset, compressedData.Length);
-            Buffer.BlockCopy(BitConverter.GetBytes(buffer.Length), Offset, gZipBuffer, Offset, DistOffset);
+            Buffer.BlockCopy(
+                    compressedData, Metadata.ByteOffset, gZipBuffer,
+                    Metadata.ByteDistOffset, compressedData.Length
+                );
+            
+            Buffer.BlockCopy(
+                    BitConverter.GetBytes(buffer.Length), Metadata.ByteOffset, 
+                    gZipBuffer, Metadata.ByteOffset, Metadata.ByteDistOffset
+                );
             
             return Convert.ToBase64String(gZipBuffer);
         }
@@ -40,15 +45,15 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             
             using (var memoryStream = new MemoryStream())
             {
-                var dataLength = BitConverter.ToInt32(gZipBuffer, Offset);
-                memoryStream.Write(gZipBuffer, DistOffset, gZipBuffer.Length - DistOffset);
+                var dataLength = BitConverter.ToInt32(gZipBuffer, Metadata.ByteOffset);
+                memoryStream.Write(gZipBuffer, Metadata.ByteDistOffset, gZipBuffer.Length - Metadata.ByteDistOffset);
 
                 var buffer = new byte[dataLength];
-                memoryStream.Position = Offset;
+                memoryStream.Position = Metadata.ByteOffset;
                 
                 using (var gZipStream = new GZipStream(memoryStream, CompressionMode.Decompress))
                 {
-                    gZipStream.Read(buffer, Offset, buffer.Length);
+                    gZipStream.Read(buffer, Metadata.ByteOffset, buffer.Length);
                 }
 
                 return Encoding.UTF8.GetString(buffer);
