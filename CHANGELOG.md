@@ -1,5 +1,14 @@
 # Changelog
 
+#### v3.0.0:
+- Remove method to define a custom serializer class. Using this approach can help in case of human error, now to set a custom serializer just needs to be done by the editor
+- Add info section on PedeData
+- Add shortcut to open PedeSettings file
+- Add flag to prevent changes to FileData when editor is running
+- Add flag to verify PedeData before run
+- Remove support to nint, nuint to increase compatibility
+- Add Pede icons
+
 #### v2.1.0:
 - Add method to define a custom serializer class to be used at runtime
 - Add way to use custom serializer on validation by set on PedeSettings

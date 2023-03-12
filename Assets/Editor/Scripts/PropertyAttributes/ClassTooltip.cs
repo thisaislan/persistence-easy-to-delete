@@ -26,9 +26,10 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.PropertyAttributes
         private void OnEnable()
         {
             var attributes = target.GetType().GetCustomAttributes(inherit: false);
-            foreach(var attr in attributes)
+            
+            foreach(var attribute in attributes)
             {
-                if(attr is ClassTooltip tooltip) { this.tooltip = tooltip.description; }
+                if(attribute is ClassTooltip tooltip) { this.tooltip = tooltip.description; }
             }
         }
         

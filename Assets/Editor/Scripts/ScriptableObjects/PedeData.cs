@@ -2,13 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Reflection;
+using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Constants;
 using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Metas;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Settings;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Interfaces;
+using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.PropertyAttributes;
+using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize;
+using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Interfaces;
 using UnityEditor;
 using UnityEngine;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Data
+namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
 {
     [
         CreateAssetMenu(
@@ -17,9 +20,10 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             order = Metadata.AssetMenuDataOrder
         )
     ]
+    [ClassTooltip(Consts.PedeDataClassTipAttr)]
     internal class PedeData : ScriptableObject
     {
-        
+
         [Serializable]
         internal struct Data
         {
@@ -28,27 +32,72 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             
             [SerializeField]
             internal string type;
-            
+
             [SerializeField]
             [TextArea(Metadata.TextAreaDataMinLines, Metadata.TextAreaDataMaxLines)]
             internal string value;
-            
+
             internal bool IsKeyNull() =>
                 key == null;
             
             internal bool IsSameValue(string key, string type) =>
                 this.key.Equals(key) && this.type.Equals(type);
         }
+
+        [SerializeField]
+        [Header(Consts.PedeDataSettingsHeaderAttr)]
+        [Tooltip(Consts.PedeDataAvoidChangesTooltipAttr)]
+        [Space]
+        private bool avoidChanges;
         
         [SerializeField]
+        [Space(Metadata.DefaultFieldDataTopSpace)]
+        [Tooltip(Consts.PedeDataPlayerPrefsTooltipAttr)]
+        [Header(Consts.PedeDataHeaderAttr)]
+        [Space]
         internal List<Data> playerPrefData = new List<Data>();
         
         [SerializeField]
+        [Space(Metadata.DefaultFieldDataTopSpace)]
+        [Tooltip(Consts.PedeDataFileToolTipAttr)]
         internal List<Data> fileData = new List<Data>();
+
+        [SerializeField]
+        [Space(Metadata.DefaultFieldDataTopSpace)]
+        [Tooltip(Consts.PedeDataFileInfoAttr)]
+        private Info info = new Info();
+
+        private List<Data> playerPrefDataBackup;
         
+        private List<Data> fileDataBackup;
+        
+        private bool wasDataChanged = true;
+        
+        private bool avoidChangesBackup;
+
+        #region OverrideRegion
+        
+        private void OnEnable()
+        {
+            if (!IsOnScriptReload())
+            {
+                SetFixedData();
+            }
+        }
+
+        private void OnValidate()
+        {
+            if (!IsOnScriptReload() && IsAvoidChangesFlagsTheSame())
+            {
+                DataHasChanged();
+            }
+        }
+
+        #endregion //OverrideRegion
+
         #region PlayerPrefsRegion
-        
-        internal void SetPlayerPrefs<T>(string key, T value, ISerializer serializer)
+
+        internal void SetPlayerPrefs<T>(string key, T value, IPedeSerializer serializer)
         {
             CheckKeyAsNull(key);
             CheckValueAsNull(value);
@@ -66,17 +115,18 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             {
                 playerPrefData.Add(CreatePlayerPrefsData(key, value, serializer));
             }
-
+            info.UpdatePlayerPrefsNumberOfSetsInTheLastRun();
+            info.UpdateSize(this);
             PersistAsset();
         }
 
         internal void GetPlayerPrefs<T>(
             string key,
             Action<T> actionIfHasResult,
-            ISerializer serializer,
+            IPedeSerializer serializer,
             Action actionIfHasNotResult = null,
             bool destroyAfter = false
-            )
+        )
         {
             CheckKeyAsNull(key);
             CheckActionAsNull(actionIfHasResult);
@@ -93,16 +143,22 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             {
                 actionIfHasNotResult?.Invoke();
             }
+            
+            info.UpdatePlayerPrefsNumberOfGetsInTheLastRun();
+            PersistAsset();
         }
 
         internal void DeletePlayerPrefs<T>(string key)
         {
             RemovePlayerPrefsData<T>(key);
+            info.UpdatePlayerPrefsNumberOfDeletesInTheLastRun();
+            info.UpdateSize(this);
             PersistAsset();
         }
         
         internal void DeleteAllPlayerPrefs()
         {
+            info.UpdatePlayerPrefsNumberOfDeletesInTheLastRun(playerPrefData.Count);
             playerPrefData.Clear();
             PersistAsset();
         }
@@ -113,9 +169,12 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             CheckActionAsNull(actionWithResult);
             
             actionWithResult.Invoke(ExistsData(playerPrefData, key, GetTypeName(typeof(T))));
+            
+            info.UpdatePlayerPrefsNumberOfHasKeyInTheLastRun();
+            PersistAsset();
         }
 
-        private Data CreatePlayerPrefsData<T>(string key, T value, ISerializer serializer) =>
+        private Data CreatePlayerPrefsData<T>(string key, T value, IPedeSerializer serializer) =>
             new Data
             {
                 key = key,
@@ -123,39 +182,17 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
                 value = GetPlayerPrefsValue(value, serializer)
             };
         
-        private string GetPlayerPrefsValue<T>(T value, ISerializer serializer)
+        private string GetPlayerPrefsValue<T>(T value, IPedeSerializer serializer)
         {
-            if (Metadata.BuildInTypes.Contains(typeof(T)))
-            {
-                return Convert.ToString(value);
-            }
-            else if (typeof(T) == typeof(nint))
-            {
-                return Convert.ToString(value);
-            }
-            else if (typeof(T) == typeof(nuint))
-            {
-                return Convert.ToString(value);
-            }
-            else
-            {
-                return serializer.Serialize(value);
-            }
+            if (Metadata.BuildInTypes.Contains(typeof(T))) { return Convert.ToString(value); }
+            else { return serializer.Serialize(value); }
         }
 
-        private void GetPlayerPrefsData<T>(string value, Action<T> actionWithResult, ISerializer serializer)
+        private void GetPlayerPrefsData<T>(string value, Action<T> actionWithResult, IPedeSerializer serializer)
         {
             if (Metadata.BuildInTypes.Contains(typeof(T)))
             {
                 GetBuildInTypePlayerPrefs(value, actionWithResult);
-            }
-            else if (typeof(T) == typeof(nint))
-            {
-                GetNintPlayerPrefs(Convert.ToInt32(value), actionWithResult as Action<nint>);
-            }
-            else if (typeof(T) == typeof(nuint))
-            {
-                GetUnintPlayerPrefs(Convert.ToUInt32(value), actionWithResult as Action<nuint>);
             }
             else
             {
@@ -171,12 +208,6 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             var typeConverter = TypeDescriptor.GetConverter(typeof(T));
             return (T)typeConverter.ConvertFromString(value);
         }
-
-        private void GetNintPlayerPrefs(nint value, Action<nint> actionWithResult) =>
-            actionWithResult.Invoke(value);
-
-        private void GetUnintPlayerPrefs(nuint value, Action<nuint> actionWithResult) =>
-            actionWithResult.Invoke(value);
 
         private Data GetFirstPlayerPrefsDataOrDefault<T>(string key) =>
             GetFirstDataOrDefault(playerPrefData, key, GetTypeName(typeof(T)));
@@ -197,50 +228,19 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
 
                 if (!string.IsNullOrEmpty(data.type))
                 {
-                      try 
-                      {
+                    try
+                    {
                         var type = Metadata.BuildInTypes.FirstOrDefault(type => GetTypeName(type).Equals(data.type));
-                        
-                        if (type != default)
-                        {
-                            if (type == typeof(bool)) { GetConvertedBuildInType<bool>(data.value); } 
-                            else if (type == typeof(byte)) { GetConvertedBuildInType<byte>(data.value); } 
-                            else if (type == typeof(sbyte)) { GetConvertedBuildInType<sbyte>(data.value); } 
-                            else if (type == typeof(char)) { GetConvertedBuildInType<char>(data.value); } 
-                            else if (type == typeof(decimal)) { GetConvertedBuildInType<decimal>(data.value); } 
-                            else if (type == typeof(double)) { GetConvertedBuildInType<double>(data.value); } 
-                            else if (type == typeof(float)) { GetConvertedBuildInType<float>(data.value); } 
-                            else if (type == typeof(int)) { GetConvertedBuildInType<int>(data.value); } 
-                            else if (type == typeof(uint)) { GetConvertedBuildInType<uint>(data.value); } 
-                            else if (type == typeof(long)) { GetConvertedBuildInType<long>(data.value); } 
-                            else if (type == typeof(ulong)) { GetConvertedBuildInType<ulong>(data.value); } 
-                            else if (type == typeof(short)) { GetConvertedBuildInType<short>(data.value); } 
-                            else if (type == typeof(ushort)) { GetConvertedBuildInType<ushort>(data.value); } 
-                            else if (type == typeof(string)) { GetConvertedBuildInType<string>(data.value); }
-                        }
-                        else if (data.type == GetTypeName(typeof(nint))) { Convert.ToInt32(data.value); }
-                        else if (data.type == GetTypeName(typeof(nuint))) { Convert.ToUInt32(data.value); }
-                        else
-                        {
-                            if (customSerializer != null)
-                            {
-                                customSerializer.InvokeCustomDeserializeMethod<object>(data.value);
-                            }
-                            else
-                            {
-                                JsonUtility.FromJson<object>(data.value);
-                            }
-                        }
-                      }
-                      catch
-                      {
-                          HasError(data.key, index);
-                      }
+
+                        if (type != default) { TryConvertFromBuiltType(type, data); }
+                        else { InvokeDeserializeMethodAsAbstract(customSerializer, data); }
+                    }
+                    catch
+                    {
+                        HasError(data.key, index);
+                    }
                 }
-                else
-                {
-                    HasError(data.key, index);
-                }
+                else { HasError(data.key, index); }
             }
             
             void HasError(string keyInValidation, int index)
@@ -250,6 +250,24 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             }
 
             return dataIsValid;
+        }
+
+        private void TryConvertFromBuiltType(Type type, Data data)
+        {
+            if (type == typeof(bool)) { GetConvertedBuildInType<bool>(data.value); }
+            else if (type == typeof(byte)) { GetConvertedBuildInType<byte>(data.value); }
+            else if (type == typeof(sbyte)) { GetConvertedBuildInType<sbyte>(data.value); }
+            else if (type == typeof(char)) { GetConvertedBuildInType<char>(data.value); }
+            else if (type == typeof(decimal)) { GetConvertedBuildInType<decimal>(data.value); }
+            else if (type == typeof(double)) { GetConvertedBuildInType<double>(data.value); }
+            else if (type == typeof(float)) { GetConvertedBuildInType<float>(data.value); }
+            else if (type == typeof(int)) { GetConvertedBuildInType<int>(data.value); }
+            else if (type == typeof(uint)) { GetConvertedBuildInType<uint>(data.value); }
+            else if (type == typeof(long)) { GetConvertedBuildInType<long>(data.value); }
+            else if (type == typeof(ulong)) { GetConvertedBuildInType<ulong>(data.value); }
+            else if (type == typeof(short)) { GetConvertedBuildInType<short>(data.value); }
+            else if (type == typeof(ushort)) { GetConvertedBuildInType<ushort>(data.value); }
+            else if (type == typeof(string)) { GetConvertedBuildInType<string>(data.value); }
         }
 
         private bool IsPlayerPrefsDataKeysValid(ValidationDataErrorHandler validationDataErrorHandler) =>
@@ -262,7 +280,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
         
         #region FileRegion
         
-        internal void SetFile<T>(string key, T value, ISerializer serializer)
+        internal void SetFile<T>(string key, T value, IPedeSerializer serializer)
         {
             CheckKeyAsNull(key);
             CheckValueAsNull(value);
@@ -280,16 +298,19 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             {
                 fileData.Add(CreateFileData(key, value, serializer));
             }
-
+            
+            info.UpdateFileNumberOfSetsInTheLastRun();
+            info.UpdateSize(this);
             PersistAsset();
         }
         
         internal void GetFile<T>(
             string key,
             Action<T> actionIfHasResult,
-            ISerializer serializer,
+            IPedeSerializer serializer,
             Action actionIfHasNotResult = null,
-            bool destroyAfter = false)
+            bool destroyAfter = false
+        )
         {
             CheckKeyAsNull(key);
             CheckActionAsNull(actionIfHasResult);
@@ -306,17 +327,25 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             {
                 actionIfHasNotResult?.Invoke();
             }
+            
+            info.UpdateFileNumberOfGetsInTheLastRun();
+            PersistAsset();
         }
         
         internal void DeleteFile<T>(string key)
         {
             CheckKeyAsNull(key);
             RemoveFile<T>(key);
+            
+            info.UpdateFileNumberOfDeletesInTheLastRun();
+            info.UpdateSize(this);
+            
             PersistAsset();
         }
         
         internal void DeleteAllFiles()
         {
+            info.UpdateFileNumberOfDeletesInTheLastRun(fileData.Count);
             fileData.Clear();
             PersistAsset();
         }
@@ -327,18 +356,21 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             CheckActionAsNull(actionWithResult);
             
             actionWithResult.Invoke(ExistsData(fileData, key, GetTypeName(typeof(T))));
+            
+            info.UpdateFileNumberOfHasKeyInTheLastRun();
+            PersistAsset();
         }
 
         private void RemoveFile<T>(string key) =>
             RemoveData(fileData, key, GetTypeName(typeof(T)));
         
-        private void GetFileData<T>(string value, Action<T> actionWithResult, ISerializer serializer) =>
+        private void GetFileData<T>(string value, Action<T> actionWithResult, IPedeSerializer serializer) =>
             GetObject(serializer.Deserialize<T>(value), actionWithResult);
 
         private Data GetFirstFileDataOrDefault<T>(string key) =>
             GetFirstDataOrDefault(fileData, key, GetTypeName(typeof(T)));
         
-        private Data CreateFileData<T>(string key, T value, ISerializer serializer) =>
+        private Data CreateFileData<T>(string key, T value, IPedeSerializer serializer) =>
             new Data
             {
                 key = key,
@@ -359,17 +391,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
 
                 if (!string.IsNullOrEmpty(data.type))
                 {
-                    try 
-                    { 
-                        if (customSerializer != null)
-                        {
-                            customSerializer.InvokeCustomDeserializeMethod<object>(data.value);
-                        }
-                        else
-                        {
-                            JsonUtility.FromJson<object>(data.value);
-                        }
-                    }
+                    try { InvokeDeserializeMethodAsAbstract(customSerializer, data); }
                     catch { HasError(data.key, index); }
                 }
                 else
@@ -425,8 +447,74 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
                    isPlayerPrefsDataTypesValid &&
                    isFileDataTypesValid;
         }
+        
+        internal bool ShouldAvoidChanges() => 
+            avoidChanges;
 
-        private bool IsKeysValid(List<Data> dataList, ValidationDataErrorHandler validationDataErrorHandler, bool isFileData)
+        internal void CreateBackup()
+        {
+            if (avoidChanges)
+            {
+                playerPrefDataBackup = new List<Data>(playerPrefData);
+                fileDataBackup = new List<Data>(fileData);
+            }
+        }
+        
+        internal void SetBackup()
+        {
+            if (avoidChanges)
+            {
+                if (playerPrefDataBackup != null) { playerPrefData = playerPrefDataBackup; }
+                if (fileDataBackup != null) { fileData = fileDataBackup; }
+                info.UpdateSize(this);
+            }
+        }
+
+        internal void CleanBackup()
+        {
+            playerPrefDataBackup = null;
+            fileDataBackup = null;
+        }
+        
+        internal void CleanDataChangeFlag() =>
+            ChangeDataFlag(false);
+        
+        internal void ResetDataFlag() =>
+            ChangeDataFlag(true);
+
+        internal bool WasDataChanged() =>
+            wasDataChanged;
+        
+        internal void ResetDataChanged() =>
+            wasDataChanged = false;
+
+        internal void SetFixedData() =>
+            info.SetFixedData();
+
+        internal void SetNewRunInfo()
+        {
+            info.UpdateNumberOfUses();
+            info.CleanLastRunData();
+            PersistAsset();
+        }
+
+        private void DataHasChanged()
+        {
+            info.UpdateSize(this);
+            ResetDataFlag();
+        }
+
+        private void ChangeDataFlag(bool value)
+        {
+            wasDataChanged = value;
+            PersistAsset();
+        }
+
+        private bool IsKeysValid(
+            List<Data> dataList,
+            ValidationDataErrorHandler validationDataErrorHandler,
+            bool isFileData
+        )
         {
             var dataIsValid = true;
 
@@ -440,7 +528,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
                     dataIsValid = false;
                 }
 
-                if (IsDuplicatedKey(data.key, dataList))
+                if (IsDuplicatedKey(data.key, data.type, dataList))
                 {
                     validationDataErrorHandler.HandleKeyError(data.value, index, isFileData, true);
                     dataIsValid = false;
@@ -450,10 +538,14 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             return dataIsValid;
         }
 
-        private bool IsDuplicatedKey(string key, List<Data> dataList) =>
-            dataList.FindAll(innerData => innerData.key == key).Count > 1;
+        private bool IsDuplicatedKey(string key, string type, List<Data> dataList) =>
+            dataList.FindAll(innerData => innerData.key == key && innerData.type == type).Count > 1;
         
-        private bool IsTypesValid(List<Data> dataList, ValidationDataErrorHandler validationDataErrorHandler, bool isFileData)
+        private bool IsTypesValid(
+            List<Data> dataList,
+            ValidationDataErrorHandler validationDataErrorHandler,
+            bool isFileData
+        )
         {
             var dataIsValid = true;
 
@@ -502,9 +594,71 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
 
         private void PersistAsset()
         {
-            EditorUtility.SetDirty(this);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
+            if (!avoidChanges) { PedeEditor.PersistAsset(this); }
+        }
+
+        private void InvokeDeserializeMethodAsAbstract(PedeSettings.CustomSerializer customSerializer, Data data)
+        {
+            MethodInfo method = null;
+            object obj = null;
+            string methodName = null;
+            
+            var type = GetTypeByName(data.type);
+
+            if (customSerializer != null)
+            {
+                methodName = nameof(customSerializer.InvokeCustomDeserializeMethod);
+                obj = customSerializer;
+            }
+            else
+            {
+                var defaultSerializer = new DefaultPedeSerializer();
+                
+                methodName = nameof(defaultSerializer.Deserialize);
+                obj = defaultSerializer;
+            }
+
+            method = GetMakeGenericMethod(obj, type, methodName);
+            
+            method.Invoke(obj, new object[] { data.value });
+        }
+        
+        private static bool IsOnScriptReload() =>
+            SessionState.GetBool(Consts.SessionOnScriptReloadFlag, false);
+
+        private MethodInfo GetMakeGenericMethod(object obj, Type type, string methodName)
+        {
+            var method = obj.GetType().GetMethod(methodName);
+
+            if (method == null)
+            {
+                method = obj.GetType().GetMethod(methodName, BindingFlags.NonPublic | BindingFlags.Instance);
+            }
+            
+            return method.MakeGenericMethod(type);
+        }
+
+        private Type GetTypeByName(string name) =>
+                AppDomain.CurrentDomain.GetAssemblies()
+                    .Reverse()
+                    .Select(assembly => assembly.GetType(name))
+                    .FirstOrDefault(type => type != null)
+                ??
+                AppDomain.CurrentDomain.GetAssemblies()
+                    .Reverse()
+                    .SelectMany(assembly => assembly.GetTypes())
+                    .FirstOrDefault(type => type.Name.Contains(name));
+        
+        private bool IsAvoidChangesFlagsTheSame()
+        {
+            var isAvoidChangesFlagTheSame = avoidChanges == avoidChangesBackup;
+
+            if (!isAvoidChangesFlagTheSame)
+            {
+                avoidChangesBackup = avoidChanges;
+            }
+            
+            return isAvoidChangesFlagTheSame;
         }
 
         #endregion //UtilsRegion
@@ -534,6 +688,136 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Da
             
             internal void HandleTypeError(string key, int index, bool isFileData) =>
                 ActionOnValidationIndividualTypeError.Invoke(key, index, isFileData);
+        }
+
+        [Serializable]
+        private class Info
+        {
+            
+            [Serializable]
+            private struct DataInfo
+            {
+                [SerializeField]
+                [PedeSerialize.PropertyAttributes.ReadOnly]
+                internal float sizeInBytes;
+            
+                [SerializeField]
+                [PedeSerialize.PropertyAttributes.ReadOnly]
+                internal int getsInTheLastRun;
+
+                [SerializeField]
+                [PedeSerialize.PropertyAttributes.ReadOnly]
+                internal int setsInTheLastRun;
+            
+                [SerializeField]
+                [PedeSerialize.PropertyAttributes.ReadOnly]
+                internal int deleteInTheLastRun;
+                
+                [SerializeField]
+                [PedeSerialize.PropertyAttributes.ReadOnly]
+                internal int hasKeyInTheLastRun;
+                
+                internal void CleanLastRunData()
+                {
+                    getsInTheLastRun = 0;
+                    setsInTheLastRun = 0;
+                    deleteInTheLastRun = 0;
+                    hasKeyInTheLastRun = 0;
+                }
+                
+            }
+            
+            [SerializeField]
+            [PedeSerialize.PropertyAttributes.ReadOnly]
+            private string createdIn;
+            
+            [SerializeField]
+            [PedeSerialize.PropertyAttributes.ReadOnly]
+            private string createdBy;
+
+            [SerializeField]
+            [PedeSerialize.PropertyAttributes.ReadOnly]
+            private int numberOfUses;
+            
+            [SerializeField]
+            [PedeSerialize.PropertyAttributes.ReadOnly]
+            private float totalSizeInBytes;
+
+            [Space]
+            [SerializeField]
+            private DataInfo playerPrefsDataInfo;
+            
+            [Space]
+            [SerializeField]
+            private DataInfo fileDataInfo;
+
+            internal void SetFixedData()
+            {
+                if (string.IsNullOrEmpty(createdIn) || string.IsNullOrEmpty(createdBy))
+                {
+                    createdIn = DateTime.Now.ToString(Consts.InfoDateFormation);
+                    createdBy = Environment.UserName;
+                }
+            }
+
+            internal void CleanLastRunData()
+            {
+                playerPrefsDataInfo.CleanLastRunData();
+                fileDataInfo.CleanLastRunData();
+            }
+
+            internal void UpdateNumberOfUses() =>
+                numberOfUses++;
+
+            internal void UpdatePlayerPrefsNumberOfGetsInTheLastRun() =>
+                playerPrefsDataInfo.getsInTheLastRun++;
+
+            internal void UpdatePlayerPrefsNumberOfSetsInTheLastRun() =>
+                playerPrefsDataInfo.setsInTheLastRun++;
+
+            internal void UpdatePlayerPrefsNumberOfDeletesInTheLastRun(int numberOfDeletes = 1) =>
+                playerPrefsDataInfo.deleteInTheLastRun += numberOfDeletes;
+
+            internal void UpdatePlayerPrefsNumberOfHasKeyInTheLastRun() =>
+                playerPrefsDataInfo.hasKeyInTheLastRun++;
+
+            internal void UpdateFileNumberOfGetsInTheLastRun() =>
+                fileDataInfo.getsInTheLastRun++;
+
+            internal void UpdateFileNumberOfSetsInTheLastRun() =>
+                fileDataInfo.setsInTheLastRun++;
+
+            internal void UpdateFileNumberOfDeletesInTheLastRun(int numberOfDeletes = 1) =>
+                fileDataInfo.deleteInTheLastRun += numberOfDeletes;
+
+            internal void UpdateFileNumberOfHasKeyInTheLastRun() =>
+                fileDataInfo.hasKeyInTheLastRun++;
+            
+            internal void UpdateSize(PedeData pedeData)
+            {
+                if (pedeData.playerPrefData != null && pedeData.playerPrefData.Count != 0)
+                {
+                    playerPrefsDataInfo.sizeInBytes = GetDataSizeInBytes(pedeData.playerPrefData);
+                }
+                else
+                {
+                    playerPrefsDataInfo.sizeInBytes = 0;
+                }
+                
+                if (pedeData.fileData != null && pedeData.fileData.Count != 0)
+                {
+                    fileDataInfo.sizeInBytes = GetDataSizeInBytes(pedeData.fileData);
+                }
+                else
+                {
+                    fileDataInfo.sizeInBytes = 0;
+                }
+
+                totalSizeInBytes = playerPrefsDataInfo.sizeInBytes + fileDataInfo.sizeInBytes;
+            }
+            
+            private float GetDataSizeInBytes(List<Data> data)=>
+                data.Sum(internalData => internalData.value.Length);
 
         }
 

@@ -1,14 +1,14 @@
 using System;
 using System.IO;
 using System.Text;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Interfaces;
+using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Interfaces;
 
 namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
 {
     internal static class PedeFile
     {
         
-        internal static void Serialize<T>(T value, Action<byte[]> actionAfterSerialize, ISerializer serializer)
+        internal static void Serialize<T>(T value, Action<byte[]> actionAfterSerialize, IPedeSerializer serializer)
         {
             var compressedValue = GetCompressedStringValue(value, serializer);
             var bytes = SerializeBytes(compressedValue);
@@ -16,7 +16,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             actionAfterSerialize(bytes);
         }
 
-        public static void Deserialize<T>(byte[] value, Action<T> actionAfterDeserialize, ISerializer serializer)
+        public static void Deserialize<T>(byte[] value, Action<T> actionAfterDeserialize, IPedeSerializer serializer)
         {
             var decompressedValue = StringCompressor.DecompressString(DeserializeBytes(value));
             var obj = serializer.Deserialize<T>(decompressedValue);
@@ -24,7 +24,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             actionAfterDeserialize(obj);
         }
 
-        internal static void SetFile<T>(string key, T value, ISerializer serializer)
+        internal static void SetFile<T>(string key, T value, IPedeSerializer serializer)
         {
             var filePath = GetFullPath(key);
             
@@ -42,7 +42,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             string key,
             Action<T> actionIfHasResult,
             Action actionIfHasNotResult,
-            ISerializer serializer,
+            IPedeSerializer serializer,
             bool destroyAfter
         )
         {
@@ -89,7 +89,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
         internal static void HasFileKey(string key, Action<bool> actionWithResult) =>
             actionWithResult.Invoke(File.Exists(GetFullPath(key)));
 
-        private static string GetCompressedStringValue<T>(T value, ISerializer serializer)
+        private static string GetCompressedStringValue<T>(T value, IPedeSerializer serializer)
         {
             var strigValue = serializer.Serialize(value);
             

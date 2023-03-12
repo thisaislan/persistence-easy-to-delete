@@ -1,7 +1,6 @@
 using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Constants;
 using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Metas;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Data;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Settings;
+using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects;
 using UnityEditor;
 using UnityEngine;
 
@@ -18,6 +17,10 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         
         [MenuItem(Metadata.MenuItemValidateData + Metadata.MenuItemValidateDataShortcut, true)]
         private static bool ValidateDataValidate() => 
+            PedeEditor.IsDataFileAccessible();
+        
+        [MenuItem(Metadata.MenuItemOpenSettings + Metadata.MenuItemOpenSettingsShortcut, true)]
+        private static bool ValidateOpenSettings() => 
             PedeEditor.IsDataFileAccessible();
         
         [MenuItem(Metadata.MenuItemDeleteData, true)]
@@ -48,43 +51,14 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         [MenuItem(
             Metadata.MenuItemValidateData + Metadata.MenuItemValidateDataShortcut,
             priority = Metadata.MenuItemValidateDataOptionPriority)]
-        private static void ValidateData()
-        {
-            ShowValidationWarningMessageOnConsole(
-                $"{Consts.DebugMessageSuffix} " +
-                $"{Consts.ValidationLogMessage}"
-            );
-            
-            if (PedeEditor.HasCustomSerializerFile())
-            {
-                ShowValidationWarningMessageOnConsole(
-                        $"{Consts.DebugMessageSuffix} " +
-                        $"{Consts.ValidationWarningMessage}"
-                    );
-                
-                var isCustomSerializerFileValid = 
-                        PedeEditor.IsCustomSerializerFileValid(
-                            new PedeSettings.ValidationSerializerErrorHandler(
-                                    ShowValidationSerializerMethodNotFound,
-                                    ShowValidationSerializerClassError,
-                                    ShowValidationSerializerInterfaceError
-                                )
-                            );
-
-                if (!isCustomSerializerFileValid) { return; }
-            }
-
-            ShoValidationDialog(
-                PedeEditor.IsDataValid(
-                    new PedeData.ValidationDataErrorHandler(
-                        ShowValidationErrorDataValueMessage,
-                        ShowValidationErrorDataKeyMessage,
-                        ShowValidationErrorDataTypeMessage
-                    )
-                )
-            );
-        }
-
+        private static void ValidateData() =>
+            RunDataValidation(true);
+        
+        [MenuItem(Metadata.MenuItemOpenSettings + Metadata.MenuItemOpenSettingsShortcut, 
+            priority = Metadata.MenuItemOpenSettingsPriority)]
+        private static void OpenSettings() => 
+            PedeEditor.SelectSettingsFile();
+        
         [MenuItem(Metadata.MenuItemDeleteData, priority = Metadata.MenuItemDeleteDataPriority)]
         private static void DeleteData()
         {
@@ -100,9 +74,53 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         }
         
         #endregion //DaraHandleRegion
+        
+        #region StartRegion
+        
+        [InitializeOnEnterPlayMode]
+        private static void CheckValidateDataOnRunStart()
+        {
+            if (PedeEditor.ShouldVerifyDataOnRunStart() && PedeEditor.ShouldRunAValidation())
+            {
+                RunDataValidation(false);
+            }
+        }
+        
+        #endregion //StartRegion
 
         #region UtilsRegion
-        
+
+        private static void RunDataValidation(bool showDialog)
+        {
+            ShowValidationWarningMessageOnConsole($"{Consts.DebugMessageSuffix} {Consts.ValidationLogMessage}");
+            
+            if (PedeEditor.HasCustomSerializerFile())
+            {
+                ShowValidationWarningMessageOnConsole($"{Consts.DebugMessageSuffix} {Consts.ValidationWarningMessage}");
+                
+                if (!IsCustomSerializerFileValid())
+                {
+                    if (showDialog) { ShoValidationDialog(false); }
+                    
+                    return;
+                }
+            }
+            
+            var isDataValid = IsDataValid();
+
+            if (showDialog) { ShoValidationDialog(isDataValid); }
+            
+            if (isDataValid)
+            {
+                ShowValidationWarningMessageOnConsole(
+                    $"{Consts.DebugMessageSuffix} " +
+                    $"{Consts.MenuItemValidationDialogSuccessMessage}"
+                );
+                
+                PedeEditor.CleanDataChangFlag();
+            }
+        }
+
         private static bool ShouldDelete() =>
             EditorUtility.DisplayDialog(
                     Consts.MenuItemDeleteDialogTitle, 
@@ -117,6 +135,24 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
                 isDataValid ? Consts.MenuItemValidationDialogSuccessMessage :
                     Consts.MenuItemValidationDialogErrorMessage, 
                 Consts.MenuItemValidationDialogOkButton
+            );
+        
+        private static bool IsCustomSerializerFileValid() =>
+            PedeEditor.IsCustomSerializerFileValid(
+                new PedeSettings.ValidationSerializerErrorHandler(
+                    ShowValidationSerializerMethodNotFound,
+                    ShowValidationSerializerClassError,
+                    ShowValidationSerializerInterfaceError
+                )
+            );
+
+        private static bool IsDataValid() =>
+            PedeEditor.IsDataValid(
+                new PedeData.ValidationDataErrorHandler(
+                    ShowValidationErrorDataValueMessage,
+                    ShowValidationErrorDataKeyMessage,
+                    ShowValidationErrorDataTypeMessage
+                )
             );
         
         private static void ShowValidationErrorDataValueMessage(string key, int index, bool isFileData) =>
@@ -151,12 +187,16 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
                 $"{Consts.ValidationSerializerMethodNotFoundMessage} " +
                 $"{(isSerializerMethod? Metadata.SerializerSerializeMethodName : Metadata.SerializerDeserializeMethodName)}"
             );
-        
-        private static void ShowValidationSerializerClassError() =>
-            ShowValidationErrorMessageOnConsole(
-                    $"{Consts.DebugMessageSuffix} {Consts.ValidationSerializerClassErrorMessage}"
-                );
-        
+
+        private static void ShowValidationSerializerClassError(bool isEncapsulationError)
+        {
+            var bodyMessage = isEncapsulationError ? 
+                Consts.ValidationSerializerEncapsulationErrorClassErrorMessage : 
+                Consts.ValidationSerializerClassErrorMessage;
+            
+            ShowValidationErrorMessageOnConsole($"{Consts.DebugMessageSuffix} {bodyMessage}");
+        }
+
         private static void ShowValidationSerializerInterfaceError() =>
             ShowValidationErrorMessageOnConsole(
                     $"{Consts.DebugMessageSuffix} {Consts.ValidationSerializerClassInterfaceMessage}"

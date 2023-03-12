@@ -3,31 +3,98 @@ using System.Reflection;
 using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Constants;
 using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Metas;
 using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.PropertyAttributes;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Data;
 using UnityEditor;
 using UnityEngine;
 using Object = System.Object;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Settings
+namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
 {
     [ClassTooltip(Consts.PedeSettingsClassTipAttr)]
     internal class PedeSettings : ScriptableObject
     {
-        [Space(Metadata.SettingsDataTopSpace)]
+
+        [Space(Metadata.SettingsFirstFieldTopSpace)]
         [Header(Consts.PedeSettingsDataHeaderAttr)]
         [Tooltip(Consts.PedeSettingsDataTooltipAttr)]
         [Space]
         [SerializeField]
+        [OnChanged(nameof(ResetDataFlag))]
         internal PedeData pedeData;
         
-        [Space(Metadata.SettingsSerializerTopSpace)]
+        [Space(Metadata.SettingsFieldTopSpace)]
         [Header(Consts.PedeSettingsSerializerHeaderAttr)]
         [Tooltip(Consts.PedeSettingsSerializerTooltipAttr)]
         [Space]
         [SerializeField]
+        [OnChanged(nameof(CustomSerializerWasChanged))]
         private MonoScript customSerializer;
 
-        internal bool HasCustomSerializerFile() =>
+        [Tooltip(Consts.PedeSettingsSerializerPathTooltipAttr)]
+        [PedeSerialize.PropertyAttributes.ReadOnly]
+        [Space]
+        [SerializeField]
+        private string customSerializerPath;
+
+        [Space(Metadata.SettingsFieldTopSpace)]
+        [Header(Consts.PedeSettingsSettingsHeaderAttr)]
+        [Tooltip(Consts.PedeSettingsVerifyOnStartTooltipAttr)]
+        [Space]
+        [SerializeField]
+        private bool verifyDataOnRunStart = true;
+
+        private bool wasCustomSerializerChanged = true;
+        
+        private bool wasDataChanged = true;
+
+        #region OverrideRegion
+
+        private void OnValidate()
+        {
+            if (wasCustomSerializerChanged)
+            {
+                customSerializerPath = customSerializer != null ?
+                AssetDatabase.GetAssetPath(customSerializer) : null;
+
+                PersistAsset();
+            }
+        }
+
+        #endregion //OverrideRegion
+
+        internal void ResetCustomSerializerChangeFile()
+        {
+            if (!string.IsNullOrEmpty(customSerializerPath))
+            {
+                customSerializer = AssetDatabase.LoadAssetAtPath<MonoScript>(customSerializerPath);
+                PersistAsset();
+            }
+        }
+
+        internal void CleanCustomSerializerChangeFlag() =>
+            wasCustomSerializerChanged = false;
+        
+        internal void CleanDataChangeFlag() =>
+            ChangeDataFlag(false);
+
+        internal void ResetDataFlag() =>
+            ChangeDataFlag(true);
+        
+        internal bool WasCustomSerializerChanged() =>
+            wasCustomSerializerChanged;
+        
+        internal bool WasDataChanged() =>
+            wasDataChanged;
+
+        internal string GetCustomSerializerClassName() =>
+            customSerializer.GetClass().ToString();
+
+        internal string GetCustomSerializerAssemblyName() =>
+            Assembly.GetAssembly(customSerializer.GetClass()).GetName().Name;
+
+        internal bool ShouldVerifyDataOnRunStart() =>
+            verifyDataOnRunStart;
+
+        internal bool HasCustomSerializerFile() => 
             customSerializer != null;
 
         internal CustomSerializer GetCustomSerializer() =>
@@ -40,16 +107,44 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Se
                 var customSerializer = GetCustomSerializer();
                 
                 return CheckSerializeInterface(validationSerializerErrorHandler) &&
+                       CheckSerializeEncapsulation(validationSerializerErrorHandler) &&
                        CheckSerializeMethod(validationSerializerErrorHandler, customSerializer) &&
                        CheckDeserializerMethod(validationSerializerErrorHandler, customSerializer);
             }
             catch
             {
-                validationSerializerErrorHandler.HandleSerializerClassError();
+                validationSerializerErrorHandler.HandleSerializerClassError(false);
                 return false;
             }
         }
         
+        private void CustomSerializerWasChanged() =>
+            wasCustomSerializerChanged = true;
+
+        private void ChangeDataFlag(bool value)
+        {
+            wasDataChanged = value;
+
+            PersistAsset();
+        }
+        
+        private void PersistAsset()
+        {
+            PedeEditor.PersistAsset(this);
+        }
+
+        private bool CheckSerializeEncapsulation(ValidationSerializerErrorHandler validationSerializerErrorHandler)
+        {
+            var result = customSerializer.GetClass().IsPublic;
+            
+            if (!result)
+            {
+                validationSerializerErrorHandler.HandleSerializerClassError(true);
+            }
+
+            return result;
+        }
+
         private bool CheckSerializeInterface(ValidationSerializerErrorHandler validationSerializerErrorHandler)
         {
             var result = customSerializer.GetClass().GetInterface(Metadata.SerializerInterfaceName) != null;
@@ -74,7 +169,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Se
             }
             else
             {
-                return !string.IsNullOrEmpty(customSerializer.InvokeCustomSerializeMethod(DateTime.Now));
+                return !string.IsNullOrEmpty(customSerializer.InvokeCustomSerializeMethod(new object()));
             }
         }
         
@@ -91,15 +186,15 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Se
             else
             {
                 return 
-                    customSerializer.InvokeCustomDeserializeMethod<DateTime>(
-                        customSerializer.InvokeCustomSerializeMethod(DateTime.Now)
+                    customSerializer.InvokeCustomDeserializeMethod<object>(
+                        customSerializer.InvokeCustomSerializeMethod(new object())
                         ) != null;
             }
         }
 
         internal class CustomSerializer
         {
-            private MonoScript customSerializer;
+            private readonly MonoScript customSerializer;
 
             internal CustomSerializer(MonoScript customSerializer) =>
                 this.customSerializer = customSerializer;
@@ -110,14 +205,13 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Se
                 return (string)method.Invoke(GetSerializerObject(), new object[] { obj});
             }
         
-            internal T InvokeCustomDeserializeMethod<T>(string value) where T: new()
+            internal T InvokeCustomDeserializeMethod<T>(string value)
             {
                 var method = GetSerializerMethod(Metadata.SerializerDeserializeMethodName); 
                 var genericMethod = method.MakeGenericMethod(typeof(T));
 
                 return (T)genericMethod.Invoke(GetSerializerObject(), new object[] { value });
             }
-            
             
             internal MethodInfo GetSerializerMethod(string serializeMethodName) =>
                 customSerializer.GetClass().GetMethod(serializeMethodName);
@@ -130,12 +224,12 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Se
         internal class ValidationSerializerErrorHandler
         {
             private readonly Action<bool> ActionOnValidationMethodNotFoundError;
-            private readonly Action ActionOnValidationSerializerClassError;
+            private readonly Action <bool>ActionOnValidationSerializerClassError;
             private readonly Action ActionOnValidationSerializerInterfaceError;
 
             internal ValidationSerializerErrorHandler(
                 Action<bool> actionOnValidationMethodNotFoundError,
-                Action actionOnValidationSerializerClassError,
+                Action <bool>actionOnValidationSerializerClassError,
                 Action actionOnValidationSerializerInterfaceError
             )
             {
@@ -147,8 +241,8 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects.Se
             internal void HandleMethodNotFoundError(bool isSerializerMethod) =>
                 ActionOnValidationMethodNotFoundError.Invoke(isSerializerMethod);
             
-            internal void HandleSerializerClassError() =>
-                ActionOnValidationSerializerClassError.Invoke();
+            internal void HandleSerializerClassError(bool isEncapsulationError) =>
+                ActionOnValidationSerializerClassError.Invoke(isEncapsulationError);
             
             internal void HandleSerializerInterfaceError() =>
                 ActionOnValidationSerializerInterfaceError.Invoke();

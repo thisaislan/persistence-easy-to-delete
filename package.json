@@ -1,8 +1,8 @@
 {
     "name": "thisaislan.persistenceeasytodeleteineditor",
-    "version": "2.1.0",
+    "version": "3.0.0",
     "displayName": "Pede",
-    "description": "A small package to make deleting persistence easier in the editor",
+    "description": "Persistence easy to delete in editor, or just Pede, is a small library to facilitate common persistence handling in the Unity editor.",
     "documentationUrl": "https://github.com/thisaislan/persistence-easy-to-delete-in-editor",
     "changelogUrl": "https://github.com/thisaislan/persistence-easy-to-delete-in-editor/blob/main/CHANGELOG.md",
     "licensesUrl": "https://github.com/thisaislan/persistence-easy-to-delete-in-editor/blob/main/LICENSE.md",

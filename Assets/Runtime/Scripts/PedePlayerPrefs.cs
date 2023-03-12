@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Interfaces;
 using Thisaislan.PersistenceEasyToDeleteInEditor.Metas;
+using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Interfaces;
 using UnityEngine;
 
 namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
@@ -33,7 +33,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             string key,
             T value,
             Pede.PlayerPrefsSetMode playerPrefsSetMode,
-            ISerializer serializer
+            IPedeSerializer serializer
         )
         {
             SetPlayerPrefs(key, value, serializer);
@@ -49,7 +49,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             Action<T> actionIfHasResult,
             Action actionIfHasNotResult,
             Pede.PlayerPrefsGetMode playerPrefsGetMode,
-            ISerializer serializer
+            IPedeSerializer serializer
         )
         {
             HasPlayerPrefsKey(key, (result) =>
@@ -66,17 +66,9 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             }
         }
         
-        private static void SetPlayerPrefs<T>(string key, T value, ISerializer serializer)
+        private static void SetPlayerPrefs<T>(string key, T value, IPedeSerializer serializer)
         {
             if (Metadata.BuildInTypes.Contains(typeof(T)))
-            {
-                SetPlayerPrefsStringValue(key, Convert.ToString(value));
-            }
-            else if (typeof(T) == typeof(nint))
-            {
-                SetPlayerPrefsStringValue(key, Convert.ToString(value));
-            }
-            else if (typeof(T) == typeof(nuint))
             {
                 SetPlayerPrefsStringValue(key, Convert.ToString(value));
             }
@@ -86,7 +78,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             }
         }
         
-        private static void GetPlayerPrefs<T>(string key, Action<T> actionWithResult, ISerializer serializer)
+        private static void GetPlayerPrefs<T>(string key, Action<T> actionWithResult, IPedeSerializer serializer)
         {
             var value = PlayerPrefs.GetString(key, default);
             var decompressedValue = StringCompressor.DecompressString(value);
@@ -94,14 +86,6 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             if (Metadata.BuildInTypes.Contains(typeof(T)))
             {
                 GetPlayerPrefsValue(decompressedValue, actionWithResult);
-            }
-            else if (typeof(T) == typeof(nint))
-            {
-                GetPlayerPrefsNint(decompressedValue, actionWithResult as Action<nint>);
-            }
-            else if (typeof(T) == typeof(nuint))
-            {
-                GetPlayerPrefsUnint(decompressedValue, actionWithResult as Action<nuint>);
             }
             else
             {
@@ -112,18 +96,12 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
         private static void GetPlayerPrefsObject<T>(
                     string decompressedValue,
                     Action<T> actionWithResult,
-                    ISerializer serializer
+                    IPedeSerializer serializer
                 ) => 
             actionWithResult.Invoke(serializer.Deserialize<T>(decompressedValue));
 
         private static void GetPlayerPrefsValue<T>(string decompressedValue, Action<T> actionWithResult) =>
             actionWithResult.Invoke((T)Convert.ChangeType(decompressedValue, typeof(T)));
-        
-        private static void GetPlayerPrefsNint(string decompressedValue, Action<nint> actionWithResult) =>
-            actionWithResult.Invoke(Convert.ToInt32(decompressedValue));
-        
-        private static void GetPlayerPrefsUnint(string decompressedValue, Action<nuint> actionWithResult) =>
-            actionWithResult.Invoke(Convert.ToUInt32(decompressedValue));
 
         private static void SetPlayerPrefsStringValue(string key, string value) =>
             SetCompressedPlayerPrefs(key, StringCompressor.CompressString(value));

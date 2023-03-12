@@ -1,8 +1,8 @@
 # Persistence easy to delete in editor (Pede) 
 
-Persistence easy to delete in editor, or just Pede, is a small library for easy saving and deleting common persistence in the unit editor.
+Persistence easy to delete in editor, or just Pede, is a small library to easily handle persistence in Unity editor and abstract persistence flow in Unity projects.
 
-Pede allows us to use Unity's `PlayerPrefs` to persist`bool, byte, sbyte, char, decimal, double,float, int, uint, nint, nuint, long, ulong, short, ushort, string` and `object`, also abstracts the logic to persist object as `files`.      
+Pede allows us to use Unity's `PlayerPrefs` to persist`bool, byte, sbyte, char, decimal, double,float, int, uint, long, ulong, short, ushort, string` and `object`, also abstracts the logic to persist object as `files`.      
 
 At runtime, all data saved by Pede is compressed to save space and to protect the data, a similar process is applied to all used keys.  
 
@@ -68,9 +68,8 @@ If you need more information about installing package from a Git URL, you can cl
 ## Features
 
 Currently, this is what Pede does have
-| Features                   |       Status      |
+| Feature                    |       Status      |
 | -------------------------- | :----------------:|
-| SetCustomSerializer        |         ✔️         |
 | Serialize                  |         ✔️         |
 | Deserialize                |         ✔️         |
 | SetPlayerPrefs             |         ✔️         |
@@ -93,7 +92,7 @@ Please submit any queries, bugs or issues, to the [Issues](https://github.com/th
 
 ## Note
 
-By default Pede uses JsonUtility so it has all the limitations of that library. If you want to change the serializer class, check the `SetCustomSerializer` method and also the `Custom Serializer` field in the PedeSettings file. 
+By default Pede uses JsonUtility so it has all the limitations of that library. If you want to change the serializer class, check the `Custom Serializer` field in the PedeSettings file. 
 
 
 ## Thanks
@@ -101,4 +100,4 @@ My friends and family, and you for having come here!
 
 
 ## License
-Copyright (c) 2021-present Aislan Tavares (@thisaislan) and Contributors. Git Hero is free and open-source software licensed under the [MIT License](https://github.com/thisaislan/persistence-easy-to-delete-in-editor/blob/main/LICENSE.md).
+Copyright (c) 2021-present Aislan Tavares (@thisaislan) and Contributors. Pede is free and open-source software licensed under the [MIT License](https://github.com/thisaislan/persistence-easy-to-delete-in-editor/blob/main/LICENSE.md).

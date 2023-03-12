@@ -1,5 +1,5 @@
 {
-    "name": "Thisaislan.PersistenceEasyToDeleteInEditor.Pede.Interfaces",
+    "name": "Thisaislan.PersistenceEasyToDeleteInEditor.Pede.Serialize",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],

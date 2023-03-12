@@ -1,9 +1,9 @@
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.Interfaces
+namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Interfaces
 {
     /// <summary>
     /// Interface for custom serializer implementation to use on Pede.
     /// </summary>
-    public interface ISerializer
+    public interface IPedeSerializer
     {
         
         public abstract string Serialize(object obj);
