@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82b4abc1ed354a149cf52fb2fb8a46de, type: 3}
-  m_Name: PedeSerializeSettings
+  m_Name: PedSerializeSettings
   m_EditorClassIdentifier: 
   customSerializerData:
     assemblyName: 

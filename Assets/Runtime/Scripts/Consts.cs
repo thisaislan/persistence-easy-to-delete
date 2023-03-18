@@ -1,15 +1,15 @@
 using UnityEngine;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.Constants
+namespace Thisaislan.PersistenceEasyToDelete.Constants
 {
     internal static class Consts
     {
         
-        internal const string PedeKeyFormat = "{0}~{1}";
+        internal const string PedKeyFormat = "{0}~{1}";
         
-        internal const string PedeFilePethFormat = "{0}/{1}";
+        internal const string PedFilePethFormat = "{0}/{1}";
         
-        internal static readonly string PedeFileRootFolderName = $"{Application.persistentDataPath}/Pede";
+        internal static readonly string PedFileRootFolderName = $"{Application.persistentDataPath}/Ped";
         
     }
 }

@@ -1,22 +1,22 @@
 using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Interfaces;
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Metas;
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.ScriptableObjects.Bases;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize.Interfaces;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize.Metas;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize.ScriptableObjects.Bases;
 using UnityEngine;
 
 #if UNITY_EDITOR
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.PropertyAttributes;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize.PropertyAttributes;
 #endif
 
 #if UNITY_EDITOR
 [assembly: InternalsVisibleTo(Metadata.EditorAssemblyNameInternalsVisibleTo)]
 #endif
 [assembly: InternalsVisibleTo(Metadata.RuntimeAssemblyNameInternalsVisibleTo)]
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.ScriptableObjects
+namespace Thisaislan.PersistenceEasyToDelete.PedSerialize.ScriptableObjects
 {
-    internal class PedeSerializeSettings : SingletonScriptableObject<PedeSerializeSettings>
+    internal class PedSerializeSettings : SingletonScriptableObject<PedSerializeSettings>
     {
         
         [Serializable]
@@ -56,18 +56,18 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.ScriptableObj
         internal void CleanAssemblyData() =>
             this.customSerializerData = default;
 
-        internal IPedeSerializer GetSerializer()
+        internal IPedSerializer GetSerializer()
         {
             if (customSerializerData.IsEmpty())
             {
-                return new DefaultPedeSerializer();
+                return new DefaultPedSerializer();
             }
             else
             {
                 var assembly = Assembly.Load(customSerializerData.assemblyName);
                 var type = assembly.GetType(customSerializerData.className);
                 
-                return (IPedeSerializer)Activator.CreateInstance(type);
+                return (IPedSerializer)Activator.CreateInstance(type);
             }
         }
         

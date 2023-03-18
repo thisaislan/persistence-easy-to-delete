@@ -1,17 +1,20 @@
 # Changelog
 
+#### v4.0.0:
+- Rename Ped the old name is a pejorative word in French. Thank you Calm_Astronomer2930 from Reedit for informing me of this
+
 #### v3.0.0:
 - Remove method to define a custom serializer class. Using this approach can help in case of human error, now to set a custom serializer just needs to be done by the editor
-- Add info section on PedeData
-- Add shortcut to open PedeSettings file
+- Add info section on PedData
+- Add shortcut to open PedSettings file
 - Add flag to prevent changes to FileData when editor is running
-- Add flag to verify PedeData before run
+- Add flag to verify PedData before run
 - Remove support to nint, nuint to increase compatibility
-- Add Pede icons
+- Add Ped icons
 
 #### v2.1.0:
 - Add method to define a custom serializer class to be used at runtime
-- Add way to use custom serializer on validation by set on PedeSettings
+- Add way to use custom serializer on validation by set on PedSettings
 
 #### v2.0.0:
 - Add menu validation option on menu editor
@@ -27,7 +30,7 @@
 
 #### v0.3.2:
 - Remove the BinaryFormatter dependency
-- Rename PEDE folder to Pede
+- Rename PED folder to Ped
 - Update documentation to add JsonUtility information
 
 #### v0.3.1:

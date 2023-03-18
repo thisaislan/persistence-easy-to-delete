@@ -1,7 +1,7 @@
 using System;
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Interfaces;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize.Interfaces;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Metas
+namespace Thisaislan.PersistenceEasyToDelete.Editor.Metas
 {
     internal static class Metadata
     {
@@ -19,21 +19,21 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Metas
         internal const int TextAreaDataMaxLines = 10;
         internal const int TextAreaDataMinLines = 4;
         
-        internal const string AssemblyNameInternalsVisibleTo = "Thisaislan.PersistenceEasyToDeleteInEditor.Pede";
+        internal const string AssemblyNameInternalsVisibleTo = "Thisaislan.PersistenceEasyToDelete.Ped";
         
-        internal const string AssetMenuDataName = "Pede/PedeData";
+        internal const string AssetMenuDataName = "Ped/PedData";
         
-        internal const string DataFileName = "PedeData";
+        internal const string DataFileName = "PedData";
         internal const string DataFilExtension = "asset";
-        internal const string DataFolderPath = "Assets/Pede";
-        internal const string DataFullFileName = "PedeData.asset";
+        internal const string DataFolderPath = "Assets/Ped";
+        internal const string DataFullFileName = "PedData.asset";
         internal const string DataOldFilePrefix = "Old";
         
-        internal const string MenuItemDeleteData = "Tools/Pede/Delete PedeData";
-        internal const string MenuItemNewData = "Tools/Pede/New PedeData";
-        internal const string MenuItemOpenData = "Tools/Pede/Open PedeData";
-        internal const string MenuItemValidateData = "Tools/Pede/Validate PedeData";
-        internal const string MenuItemOpenSettings = "Tools/Pede/Open PedeSettings";
+        internal const string MenuItemDeleteData = "Tools/Ped/Delete PedData";
+        internal const string MenuItemNewData = "Tools/Ped/New PedData";
+        internal const string MenuItemOpenData = "Tools/Ped/Open PedData";
+        internal const string MenuItemValidateData = "Tools/Ped/Validate PedData";
+        internal const string MenuItemOpenSettings = "Tools/Ped/Open PedSettings";
         internal const string MenuItemOpenSettingsShortcut = " #F10";
         internal const string MenuItemValidateDataShortcut = " #F11";
         internal const string MenuItemOpenDataShortcut = " #F12";
@@ -43,12 +43,12 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Metas
         internal const int SettingsFieldTopSpace = 30;
 
         internal const string SettingFolderPath = "Assets/Settings";
-        internal const string SettingFullFileName = "PedeSettings.asset";
-        internal const string SettingsFileName = "PedeSettings";
+        internal const string SettingFullFileName = "PedSettings.asset";
+        internal const string SettingsFileName = "PedSettings";
         
         internal const string SerializerSerializeMethodName = "Serialize";
         internal const string SerializerDeserializeMethodName = "Deserialize";
-        internal const string SerializerInterfaceName = nameof(IPedeSerializer);
+        internal const string SerializerInterfaceName = nameof(IPedSerializer);
 
         internal static Type[] BuildInTypes =
         {

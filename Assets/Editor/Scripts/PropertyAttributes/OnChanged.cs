@@ -3,7 +3,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.PropertyAttributes
+namespace Thisaislan.PersistenceEasyToDelete.Editor.PropertyAttributes
 {
     internal class OnChanged : PropertyAttribute
     {

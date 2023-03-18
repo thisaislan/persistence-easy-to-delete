@@ -3,7 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.PropertyAttributes
+namespace Thisaislan.PersistenceEasyToDelete.Editor.PropertyAttributes
 {
     [AttributeUsage(AttributeTargets.Class)]
     internal class ClassTooltip : PropertyAttribute

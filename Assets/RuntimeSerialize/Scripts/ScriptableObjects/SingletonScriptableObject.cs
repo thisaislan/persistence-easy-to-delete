@@ -1,7 +1,7 @@
 using System.Linq;
 using UnityEngine;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.ScriptableObjects.Bases
+namespace Thisaislan.PersistenceEasyToDelete.PedSerialize.ScriptableObjects.Bases
 {
     internal class SingletonScriptableObject<T> : ScriptableObject where T : SingletonScriptableObject<T>
     {

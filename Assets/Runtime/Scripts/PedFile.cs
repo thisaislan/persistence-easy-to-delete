@@ -1,14 +1,14 @@
 using System;
 using System.IO;
 using System.Text;
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Interfaces;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize.Interfaces;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
+namespace Thisaislan.PersistenceEasyToDelete.PedComposition
 {
-    internal static class PedeFile
+    internal static class PedFile
     {
         
-        internal static void Serialize<T>(T value, Action<byte[]> actionAfterSerialize, IPedeSerializer serializer)
+        internal static void Serialize<T>(T value, Action<byte[]> actionAfterSerialize, IPedSerializer serializer)
         {
             var compressedValue = GetCompressedStringValue(value, serializer);
             var bytes = SerializeBytes(compressedValue);
@@ -16,7 +16,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             actionAfterSerialize(bytes);
         }
 
-        public static void Deserialize<T>(byte[] value, Action<T> actionAfterDeserialize, IPedeSerializer serializer)
+        public static void Deserialize<T>(byte[] value, Action<T> actionAfterDeserialize, IPedSerializer serializer)
         {
             var decompressedValue = StringCompressor.DecompressString(DeserializeBytes(value));
             var obj = serializer.Deserialize<T>(decompressedValue);
@@ -24,11 +24,11 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             actionAfterDeserialize(obj);
         }
 
-        internal static void SetFile<T>(string key, T value, IPedeSerializer serializer)
+        internal static void SetFile<T>(string key, T value, IPedSerializer serializer)
         {
             var filePath = GetFullPath(key);
             
-            Directory.CreateDirectory(Constants.Consts.PedeFileRootFolderName);
+            Directory.CreateDirectory(Constants.Consts.PedFileRootFolderName);
             
             File.Create(filePath).Close();
             
@@ -42,7 +42,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             string key,
             Action<T> actionIfHasResult,
             Action actionIfHasNotResult,
-            IPedeSerializer serializer,
+            IPedSerializer serializer,
             bool destroyAfter
         )
         {
@@ -80,16 +80,16 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
 
         internal static void DeleteAllFiles()
         {
-            if (Directory.Exists(Constants.Consts.PedeFileRootFolderName))
+            if (Directory.Exists(Constants.Consts.PedFileRootFolderName))
             {
-                Directory.Delete(Constants.Consts.PedeFileRootFolderName, true);
+                Directory.Delete(Constants.Consts.PedFileRootFolderName, true);
             }
         }
 
         internal static void HasFileKey(string key, Action<bool> actionWithResult) =>
             actionWithResult.Invoke(File.Exists(GetFullPath(key)));
 
-        private static string GetCompressedStringValue<T>(T value, IPedeSerializer serializer)
+        private static string GetCompressedStringValue<T>(T value, IPedSerializer serializer)
         {
             var strigValue = serializer.Serialize(value);
             
@@ -103,7 +103,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             Encoding.UTF8.GetString(bytes, 0, bytes.Length);
 
         private static string GetFullPath(string key) =>
-            String.Format(Constants.Consts.PedeFilePethFormat, Constants.Consts.PedeFileRootFolderName, key);
+            String.Format(Constants.Consts.PedFilePethFormat, Constants.Consts.PedFileRootFolderName, key);
 
     }
 }

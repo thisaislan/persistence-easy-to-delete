@@ -1,15 +1,15 @@
 using System.Runtime.CompilerServices;
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Interfaces;
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Metas;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize.Interfaces;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize.Metas;
 using UnityEngine;
 
 #if UNITY_EDITOR
 [assembly: InternalsVisibleTo(Metadata.EditorAssemblyNameInternalsVisibleTo)]
 #endif
 [assembly: InternalsVisibleTo(Metadata.RuntimeAssemblyNameInternalsVisibleTo)]
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize
+namespace Thisaislan.PersistenceEasyToDelete.PedSerialize
 {
-    internal class DefaultPedeSerializer : IPedeSerializer
+    internal class DefaultPedSerializer : IPedSerializer
     {
         
         public string Serialize(object obj)

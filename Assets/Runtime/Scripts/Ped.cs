@@ -1,20 +1,20 @@
 using System;
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition;
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Interfaces;
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.ScriptableObjects;
+using Thisaislan.PersistenceEasyToDelete.PedComposition;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize.Interfaces;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize.ScriptableObjects;
 
 #if UNITY_EDITOR
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor;
+using Thisaislan.PersistenceEasyToDelete.Editor;
 #endif
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor
+namespace Thisaislan.PersistenceEasyToDelete
 {
     /// <summary>
     /// Provides static methods for saving and deleting data.
     /// It can store string, integer, float, char, boolean and non-engine object types as PlayerPrefs and
     /// non-engine object types as files.
     /// </summary>
-    public static class Pede
+    public static class Ped
     {
         /// <summary> Represents the get possibilities of a PlayerPrefs </summary>
         public enum PlayerPrefsGetMode
@@ -36,21 +36,21 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             Persistent
         }
 
-        private static readonly IPedeSerializer serializer = PedeSerializeSettings.instance.GetSerializer();
+        private static readonly IPedSerializer serializer = PedSerializeSettings.instance.GetSerializer();
 
         #region PlayerPrefsRegion
         
         /// <summary> Saves PlayerPrefs with a specific key, type and value. </summary>
-        /// <param name="key"> Key used to set the PlayerPrefs. Keys in Pede uses pair key and type. </param>
+        /// <param name="key"> Key used to set the PlayerPrefs. Keys in Ped uses pair key and type. </param>
         /// <param name="value"> Value to be saved. </param>
         /// <param name="playerPrefsSetMode">
         ///   Specifies the set mode
-        ///   <see cref="T:Thisaislan.PersistenceEasyToDeleteInEditor.Pede.PlayerPrefsSetMode" />. 
+        ///   <see cref="T:Thisaislan.PersistenceEasyToDelete.Ped.PlayerPrefsSetMode" />. 
         ///  Default  PlayerPrefsSetMode.Normal
         /// </param>
         /// <remarks>
-        ///   By default Pede uses <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
-        ///   To use a custom serializer class, define that class in the Custom Serializer field in PedeSettings
+        ///   By default Ped uses <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
+        ///   To use a custom serializer class, define that class in the Custom Serializer field in PedSettings
         ///   in the Settings folder.
         /// </remarks>
         /// <exception cref="ArgumentNullException">
@@ -66,14 +66,14 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             CheckValueAsNull(value);
             
 #if UNITY_EDITOR
-            PedeEditor.SetPlayerPrefs(key, value, serializer);
+            PedEditor.SetPlayerPrefs(key, value, serializer);
 #else
-            PedePlayerPrefs.SetPlayerPrefs(GetFormattedKey(key, typeof(T)), value, playerPrefsSetMode, serializer);
+            PedPlayerPrefs.SetPlayerPrefs(GetFormattedKey(key, typeof(T)), value, playerPrefsSetMode, serializer);
 #endif
         }
 
         /// <summary> Loads PlayerPrefs with a specific key and type. </summary>
-        /// <param name="key"> Key used to get the PlayerPrefs. Keys in Pede uses pair key and type. </param>
+        /// <param name="key"> Key used to get the PlayerPrefs. Keys in Ped uses pair key and type. </param>
         /// <param name="actionIfHasResult">
         ///   Action that will be performed if the PlayerPrefs exists.
         /// </param>
@@ -82,12 +82,12 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         /// </param>
         /// <param name="playerPrefsGetMode">
         ///   Specifies the get mode
-        ///   <see cref="T:Thisaislan.PersistenceEasyToDeleteInEditor.Pede.PlayerPrefsGetMode" />. 
+        ///   <see cref="T:Thisaislan.PersistenceEasyToDelete.Ped.PlayerPrefsGetMode" />. 
         ///  Default PlayerPrefsGetMode.Normal
         /// </param>
         /// <remarks>
-        ///   By default Pede uses <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
-        ///   To use a custom serializer class, define that class in the Custom Serializer field in PedeSettings
+        ///   By default Ped uses <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
+        ///   To use a custom serializer class, define that class in the Custom Serializer field in PedSettings
         ///   in the Settings folder.
         /// </remarks>
         /// <exception cref="ArgumentNullException">
@@ -103,7 +103,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             CheckActionAsNull(actionIfHasResult);
 
 #if UNITY_EDITOR
-            PedeEditor.GetPlayerPrefs(
+            PedEditor.GetPlayerPrefs(
                     key,
                     actionIfHasResult,
                     actionIfHasNotResult,
@@ -111,7 +111,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
                     playerPrefsGetMode != PlayerPrefsGetMode.Normal
                 );
 #else
-            PedePlayerPrefs.GetPlayerPrefs(
+            PedPlayerPrefs.GetPlayerPrefs(
                     GetFormattedKey(key, typeof(T)), 
                         actionIfHasResult, 
                         actionIfHasNotResult, 
@@ -122,7 +122,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         }
 
         /// <summary> Deletes PlayerPrefs with a specific key and type. </summary>
-        /// <param name="key"> Key used to delete the PlayerPrefs. Keys in Pede uses pair key and type. </param>
+        /// <param name="key"> Key used to delete the PlayerPrefs. Keys in Ped uses pair key and type. </param>
         /// <param name="shouldSaveImmediately"> If true, it saves PlayerPrefs after deletion. Default is false. </param>
         /// <exception cref="ArgumentNullException">
         ///   Key cannot be null.
@@ -132,9 +132,9 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             CheckKeyAsNull(key);
             
 #if UNITY_EDITOR
-            PedeEditor.DeletePlayerPrefs<T>(key);
+            PedEditor.DeletePlayerPrefs<T>(key);
 #else
-            PedePlayerPrefs.DeletePlayerPrefs(GetFormattedKey(key, typeof(T)), shouldSaveImmediately);
+            PedPlayerPrefs.DeletePlayerPrefs(GetFormattedKey(key, typeof(T)), shouldSaveImmediately);
 #endif
         }
 
@@ -143,14 +143,14 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         public static void DeleteAllPlayerPrefs(bool shouldSaveImmediately = false)
         {
 #if UNITY_EDITOR
-            PedeEditor.DeleteAllPlayerPrefs();
+            PedEditor.DeleteAllPlayerPrefs();
 #else
-            PedePlayerPrefs.DeleteAllPlayerPrefs(shouldSaveImmediately);
+            PedPlayerPrefs.DeleteAllPlayerPrefs(shouldSaveImmediately);
 #endif
         }
 
         /// <summary> Returns true if the given key exists in PlayerPrefs, otherwise returns false. </summary>
-        /// <param name="key"> Key used to check the PlayerPrefs. Keys in Pede uses pair key and type. </param>
+        /// <param name="key"> Key used to check the PlayerPrefs. Keys in Ped uses pair key and type. </param>
         /// <param name="actionWithResult"> Action that will be performed with the result. </param>
         /// <exception cref="ArgumentNullException">
         ///   Key and actionWithResult cannot be null.
@@ -161,9 +161,9 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             CheckActionAsNull(actionWithResult);
             
 #if UNITY_EDITOR
-            PedeEditor.HasPlayerPrefsKey<T>(key, actionWithResult);
+            PedEditor.HasPlayerPrefsKey<T>(key, actionWithResult);
 #else
-            PedePlayerPrefs.HasPlayerPrefsKey(GetFormattedKey(key, typeof(T)), actionWithResult);
+            PedPlayerPrefs.HasPlayerPrefsKey(GetFormattedKey(key, typeof(T)), actionWithResult);
 #endif
         }
         
@@ -171,7 +171,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         public static void SavePlayerPrefs()
         {
 #if !UNITY_EDITOR
-            PedePlayerPrefs.SavePlayerPrefs();
+            PedPlayerPrefs.SavePlayerPrefs();
 #endif
         }
         
@@ -187,7 +187,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             CheckValueAsNull(value);
             CheckActionAsNull(actionAfterSerialize);
             
-            PedeFile.Serialize(value, actionAfterSerialize, serializer);
+            PedFile.Serialize(value, actionAfterSerialize, serializer);
         }
         
         /// <summary> Decompress and deserialize a object. </summary>
@@ -198,15 +198,15 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             CheckValueAsNull(value);
             CheckActionAsNull(actionAfterDeserialize);
             
-            PedeFile.Deserialize<T>(value, actionAfterDeserialize, serializer);
+            PedFile.Deserialize<T>(value, actionAfterDeserialize, serializer);
         }
 
         /// <summary> Saves file with a specific key, type and value. </summary>
-        /// <param name="key"> Key used to set the file. Keys in Pede uses pair key and type. </param>
+        /// <param name="key"> Key used to set the file. Keys in Ped uses pair key and type. </param>
         /// <param name="value"> Object to be saved or a engine type. </param>
         /// <remarks>
-        ///   By default Pede uses <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
-        ///   To use a custom serializer class, define that class in the Custom Serializer field in PedeSettings
+        ///   By default Ped uses <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
+        ///   To use a custom serializer class, define that class in the Custom Serializer field in PedSettings
         ///   in the Settings folder.
         /// </remarks>
         /// <exception cref="ArgumentNullException">
@@ -218,14 +218,14 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             CheckValueAsNull(value);
             
 #if UNITY_EDITOR
-            PedeEditor.SetFile(key, value, serializer);
+            PedEditor.SetFile(key, value, serializer);
 #else
-            PedeFile.SetFile(GetFormattedKey(key, typeof(T)), value, serializer);
+            PedFile.SetFile(GetFormattedKey(key, typeof(T)), value, serializer);
 #endif
         }
         
         /// <summary> Loads file with a specific key and type. </summary>
-        /// <param name="key"> Key used to get the file. Keys in Pede uses pair key and type. </param>
+        /// <param name="key"> Key used to get the file. Keys in Ped uses pair key and type. </param>
         /// <param name="actionIfHasResult">
         ///   Action that will be performed if the file exists.
         /// </param>
@@ -234,8 +234,8 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         /// </param>
         /// <param name="destroyAfter"> If true, deletes file after. Default is false </param>
         /// <remarks>
-        ///   By default Pede uses <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
-        ///   To use a custom serializer class, define that class in the Custom Serializer field in PedeSettings
+        ///   By default Ped uses <see cref="T:UnityEngine.JsonUtility" />, so it may have its limitations.
+        ///   To use a custom serializer class, define that class in the Custom Serializer field in PedSettings
         ///   in the Settings folder.
         /// </remarks>
         /// <exception cref="ArgumentNullException">
@@ -251,9 +251,9 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             CheckActionAsNull(actionIfHasResult);
             
 #if UNITY_EDITOR
-            PedeEditor.GetFile(key, actionIfHasResult, actionIfHasNotResult, serializer, destroyAfter);
+            PedEditor.GetFile(key, actionIfHasResult, actionIfHasNotResult, serializer, destroyAfter);
 #else
-            PedeFile.GetFile(
+            PedFile.GetFile(
                     GetFormattedKey(key, typeof(T)),
                     actionIfHasResult,
                     actionIfHasNotResult,
@@ -264,7 +264,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         }
 
         /// <summary> Deletes file with a specific key and type. </summary>
-        /// <param name="key"> Key used to delete the file. Keys in Pede uses pair key and type. </param>
+        /// <param name="key"> Key used to delete the file. Keys in Ped uses pair key and type. </param>
         /// <exception cref="ArgumentNullException">
         ///   Key cannot be null.
         /// </exception>
@@ -273,9 +273,9 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             CheckKeyAsNull(key);
             
 #if UNITY_EDITOR
-            PedeEditor.DeleteFile<T>(key);
+            PedEditor.DeleteFile<T>(key);
 #else
-            PedeFile.DeleteFile(GetFormattedKey(key, typeof(T)));
+            PedFile.DeleteFile(GetFormattedKey(key, typeof(T)));
 #endif
         }
         
@@ -283,14 +283,14 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         public static void DeleteAllFiles()
         {
 #if UNITY_EDITOR
-            PedeEditor.DeleteAllFiles();
+            PedEditor.DeleteAllFiles();
 #else
-            PedeFile.DeleteAllFiles();
+            PedFile.DeleteAllFiles();
 #endif   
         }
 
         /// <summary> Checks if exists a file with a specific key and type. </summary>
-        /// <param name="key"> Key used to save the file. Keys in Pede uses pair key and type. </param>
+        /// <param name="key"> Key used to save the file. Keys in Ped uses pair key and type. </param>
         /// <param name="actionWithResult"> Action that will be performed with the result. </param>
         /// <exception cref="ArgumentNullException">
         ///   Key and actionWithResult cannot be null.
@@ -301,9 +301,9 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
             CheckActionAsNull(actionWithResult);
             
 #if UNITY_EDITOR
-            PedeEditor.HasFileKey<T>(key, actionWithResult);
+            PedEditor.HasFileKey<T>(key, actionWithResult);
 #else
-            PedeFile.HasFileKey(GetFormattedKey(key, typeof(T)), actionWithResult);
+            PedFile.HasFileKey(GetFormattedKey(key, typeof(T)), actionWithResult);
 #endif
         }
         
@@ -314,15 +314,15 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor
         public static void DeleteAll(bool shouldSaveImmediately = false)
         {
 #if UNITY_EDITOR
-            PedeEditor.DeleteAll();
+            PedEditor.DeleteAll();
 #else
-            PedePlayerPrefs.DeleteAllPlayerPrefs(shouldSaveImmediately);
-            PedeFile.DeleteAllFiles();
+            PedPlayerPrefs.DeleteAllPlayerPrefs(shouldSaveImmediately);
+            PedFile.DeleteAllFiles();
 #endif
         }
 
         private static string GetFormattedKey(string key, Type type) =>
-            String.Format(Constants.Consts.PedeKeyFormat, key, type).GetHashCode().ToString();
+            String.Format(Constants.Consts.PedKeyFormat, key, type).GetHashCode().ToString();
 
         private static void CheckKeyAsNull(string key) =>
             CheckArgumentAsNull(key, nameof(key));

@@ -1,6 +1,6 @@
 using System;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.Metas
+namespace Thisaislan.PersistenceEasyToDelete.Metas
 {
     internal static class Metadata
     {

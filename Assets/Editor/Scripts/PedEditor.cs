@@ -1,29 +1,29 @@
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.ScriptableObjects;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects;
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Interfaces;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Metas;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize.ScriptableObjects;
+using Thisaislan.PersistenceEasyToDelete.Editor.ScriptableObjects;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize.Interfaces;
+using Thisaislan.PersistenceEasyToDelete.Editor.Metas;
 using System.Runtime.CompilerServices;
 using System;
 using System.IO;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Constants;
+using Thisaislan.PersistenceEasyToDelete.Editor.Constants;
 using UnityEditor;
 using UnityEngine;
 
 using Object = UnityEngine.Object;
 
 [assembly: InternalsVisibleTo(Metadata.AssemblyNameInternalsVisibleTo)]
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
+namespace Thisaislan.PersistenceEasyToDelete.Editor
 {
     [InitializeOnLoad]
-    internal static class PedeEditor
+    internal static class PedEditor
     {
         
-        private static PedeSettings pedeSettings;
-        private static PedeData pedeData => pedeSettings.pedeData;
+        private static PedSettings pedSettings;
+        private static PedData pedData => pedSettings.pedData;
 
         #region StartRegion
         
-        static PedeEditor()
+        static PedEditor()
         {                        
             EditorApplication.playModeStateChanged -= EditorChangeStageEvent;
             EditorApplication.playModeStateChanged += EditorChangeStageEvent;
@@ -41,26 +41,26 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         {
             if (IsDataFileAccessible())
             {
-                if (pedeSettings.WasCustomSerializerChanged())
+                if (pedSettings.WasCustomSerializerChanged())
                 {
-                    if (pedeSettings.HasCustomSerializerFile())
+                    if (pedSettings.HasCustomSerializerFile())
                     {
-                        pedeSettings.ResetCustomSerializerChangeFile();
+                        pedSettings.ResetCustomSerializerChangeFile();
 
-                        PedeSerializeSettings.instance.SetAssemblyData(
-                            new PedeSerializeSettings.CustomSerializerData(
-                                pedeSettings.GetCustomSerializerClassName(),
-                                pedeSettings.GetCustomSerializerAssemblyName()
+                        PedSerializeSettings.instance.SetAssemblyData(
+                            new PedSerializeSettings.CustomSerializerData(
+                                pedSettings.GetCustomSerializerClassName(),
+                                pedSettings.GetCustomSerializerAssemblyName()
                             )
                         );
                     }
                     else
                     {
-                        PedeSerializeSettings.instance.CleanAssemblyData();
+                        PedSerializeSettings.instance.CleanAssemblyData();
                     }
                 
-                    pedeSettings.CleanCustomSerializerChangeFlag();
-                    PersistAsset(PedeSerializeSettings.instance);
+                    pedSettings.CleanCustomSerializerChangeFlag();
+                    PersistAsset(PedSerializeSettings.instance);
                 }
             }
         }
@@ -70,12 +70,12 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         {
             if (IsDataFileAccessible())
             {
-                pedeData.SetNewRunInfo();
+                pedData.SetNewRunInfo();
             }
         }
         
         [InitializeOnLoadMethod]
-        private static void PedeEditorInitializer()
+        private static void PedEditorInitializer()
         {
             if (!SessionState.GetBool(Consts.SessionStartFlag, false))
             {
@@ -88,16 +88,16 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         }
 
         [UnityEditor.Callbacks.DidReloadScripts]
-        internal static void PedeEditorDidReloadScripts()
+        internal static void PedEditorDidReloadScripts()
         {
             SessionState.SetBool(Consts.SessionOnScriptReloadFlag, false);
         }
 
         private static void CheckDataBackupInitialization()
         {
-            if (pedeData != null && pedeData.ShouldAvoidChanges() && !Application.isPlaying)
+            if (pedData != null && pedData.ShouldAvoidChanges() && !Application.isPlaying)
             {
-                pedeData.CreateBackup();
+                pedData.CreateBackup();
             }
         }
 
@@ -108,15 +108,15 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
                 CheckInitialization();
                 CheckDataBackupInitialization();
 
-                if (pedeData != null)
+                if (pedData != null)
                 {
-                    if (pedeData.ShouldAvoidChanges())
+                    if (pedData.ShouldAvoidChanges())
                     {
-                        pedeData.SetBackup();
+                        pedData.SetBackup();
                     }
-                    pedeData.CleanBackup();
+                    pedData.CleanBackup();
 
-                    PersistAsset(pedeData);
+                    PersistAsset(pedData);
                 }
 
             }
@@ -130,19 +130,19 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         {
             var settingsPath = $"{Metadata.SettingFolderPath}/{Metadata.SettingFullFileName}";
           
-            pedeSettings = GetFile<PedeSettings>(settingsPath);
+            pedSettings = GetFile<PedSettings>(settingsPath);
 
-            if (pedeSettings == null)
+            if (pedSettings == null)
             {
-                pedeSettings = CreateSettingsScriptableObjectAsset(Metadata.SettingFolderPath, settingsPath);
-                PersistAsset(pedeSettings);
+                pedSettings = CreateSettingsScriptableObjectAsset(Metadata.SettingFolderPath, settingsPath);
+                PersistAsset(pedSettings);
             }
 
-            pedeSettings.ResetCustomSerializerChangeFile();
+            pedSettings.ResetCustomSerializerChangeFile();
         }
 
-        private static PedeSettings CreateSettingsScriptableObjectAsset(string folderPath, string settingsPath) =>
-            CreateScriptableObjectAsset<PedeSettings>(folderPath, settingsPath);
+        private static PedSettings CreateSettingsScriptableObjectAsset(string folderPath, string settingsPath) =>
+            CreateScriptableObjectAsset<PedSettings>(folderPath, settingsPath);
         
         private static T CreateScriptableObjectAsset<T>(string directoryPath, string filePath) 
             where T : ScriptableObject
@@ -170,23 +170,23 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
                 InvalidateFileData(defaultDataPath);
             }
 
-            if (pedeSettings.pedeData == null)
+            if (pedSettings.pedData == null)
             {
-                var pedeData = GetFileData(defaultDataPath);
+                var pedData = GetFileData(defaultDataPath);
                 
-                if (pedeData == null)
+                if (pedData == null)
                 {
-                    pedeData = CreateDataScriptableObjectAsset(Metadata.DataFolderPath, defaultDataPath);
+                    pedData = CreateDataScriptableObjectAsset(Metadata.DataFolderPath, defaultDataPath);
                 }
-                pedeSettings.pedeData = pedeData; 
+                pedSettings.pedData = pedData; 
 
-                PersistAsset(pedeSettings);
+                PersistAsset(pedSettings);
             }
         }
 
         private static void InvalidateFileData(string defaultDataPath)
         {
-            pedeSettings.pedeData = null;
+            pedSettings.pedData = null;
             
             if (GetFileData(defaultDataPath) != null)
             {
@@ -194,12 +194,12 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
             }
         }
 
-        private static PedeData GetFileData(string dataPath) =>
-            GetFile<PedeData>(dataPath);
+        private static PedData GetFileData(string dataPath) =>
+            GetFile<PedData>(dataPath);
 
-        private static PedeData CreateDataScriptableObjectAsset(string directoryPath, string filePath)
+        private static PedData CreateDataScriptableObjectAsset(string directoryPath, string filePath)
         {
-            var data = CreateScriptableObjectAsset<PedeData>(directoryPath, filePath);
+            var data = CreateScriptableObjectAsset<PedData>(directoryPath, filePath);
             
             PersistAsset(data);
             
@@ -220,7 +220,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
                 
             } while (!string.IsNullOrEmpty(result));
 
-            PersistAsset(GetFile<PedeData>($"{Metadata.DataFolderPath}/{name}"));
+            PersistAsset(GetFile<PedData>($"{Metadata.DataFolderPath}/{name}"));
         }
 
         private static string GetWantedName(int index) =>
@@ -236,87 +236,87 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         
         #region PlayerPrefsRegion
         
-        internal static void SetPlayerPrefs<T>(string key, T value, IPedeSerializer serializer) =>
-            pedeData.SetPlayerPrefs(key, value, serializer);
+        internal static void SetPlayerPrefs<T>(string key, T value, IPedSerializer serializer) =>
+            pedData.SetPlayerPrefs(key, value, serializer);
 
         internal static void GetPlayerPrefs<T>(
                 string key,
                 Action<T> actionIfHasResult,
                 Action actionIfHasNotResult,
-                IPedeSerializer serializer,                
+                IPedSerializer serializer,                
                 bool destroyAfter
             ) =>
-            pedeData.GetPlayerPrefs(key, actionIfHasResult, serializer, actionIfHasNotResult, destroyAfter);
+            pedData.GetPlayerPrefs(key, actionIfHasResult, serializer, actionIfHasNotResult, destroyAfter);
 
         internal static void DeletePlayerPrefs<T>(string key) =>
-            pedeData.DeletePlayerPrefs<T>(key);
+            pedData.DeletePlayerPrefs<T>(key);
 
         internal static void DeleteAllPlayerPrefs() =>
-            pedeData.DeleteAllPlayerPrefs();
+            pedData.DeleteAllPlayerPrefs();
 
         internal static void HasPlayerPrefsKey<T>(string key, Action<bool> actionWithResult) =>
-            pedeData.HasPlayerPrefsKey<T>(key, actionWithResult);
+            pedData.HasPlayerPrefsKey<T>(key, actionWithResult);
 
         #endregion //PlayerPrefsRegion
         
         #region FileRegion
 
-        internal static void SetFile<T>(string key, T value, IPedeSerializer serializer) =>
-            pedeData.SetFile(key, value, serializer);
+        internal static void SetFile<T>(string key, T value, IPedSerializer serializer) =>
+            pedData.SetFile(key, value, serializer);
 
         internal static void GetFile<T>(
             string key,
             Action<T> actionIfHasResult,
             Action actionIfHasNotResult,
-            IPedeSerializer serializer,
+            IPedSerializer serializer,
             bool destroyAfter) =>
-            pedeData.GetFile(key, actionIfHasResult, serializer, actionIfHasNotResult, destroyAfter);
+            pedData.GetFile(key, actionIfHasResult, serializer, actionIfHasNotResult, destroyAfter);
 
         internal static void DeleteFile<T>(string key) =>
-            pedeData.DeleteFile<T>(key);
+            pedData.DeleteFile<T>(key);
 
         internal static void DeleteAllFiles() =>
-            pedeData.DeleteAllFiles();
+            pedData.DeleteAllFiles();
 
         internal static void HasFileKey<T>(string key, Action<bool> actionWithResult) =>
-            pedeData.HasFileKey<T>(key, actionWithResult);
+            pedData.HasFileKey<T>(key, actionWithResult);
 
         #endregion //FileRegion
 
         #region UtilsRegion
         
         internal static void DeleteAll() =>
-            pedeData.DeleteAll();
+            pedData.DeleteAll();
 
         internal static void CreateAnotherDataFile()
         {
             CheckFileData(true);
-            pedeData.ResetDataChanged();
+            pedData.ResetDataChanged();
         }
 
         internal static void SelectDataFile()
         {
-            if (IsDataFileAccessible()) { Selection.activeObject = pedeSettings.pedeData; }
+            if (IsDataFileAccessible()) { Selection.activeObject = pedSettings.pedData; }
         }
         
         internal static void SelectSettingsFile()
         {
-            if (IsDataFileAccessible()) { Selection.activeObject = pedeSettings; }
+            if (IsDataFileAccessible()) { Selection.activeObject = pedSettings; }
         }
 
         internal static bool IsDataFileAccessible()
         {
-            if (pedeSettings != null)
+            if (pedSettings != null)
             {
-                return pedeSettings.pedeData != null &&
-                       pedeSettings.name == Metadata.SettingsFileName;
+                return pedSettings.pedData != null &&
+                       pedSettings.name == Metadata.SettingsFileName;
                 
             }
             else
             {
                 CheckInitialization();
                 
-                return pedeSettings.pedeData != null;
+                return pedSettings.pedData != null;
             }
         }
 
@@ -324,39 +324,39 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         {
             if (IsDataFileAccessible())
             {
-                AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(pedeSettings.pedeData));
+                AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(pedSettings.pedData));
                 CreateAnotherDataFile();
             }
         }
 
-        internal static bool IsDataValid(PedeData.ValidationDataErrorHandler validationDataErrorHandler)
+        internal static bool IsDataValid(PedData.ValidationDataErrorHandler validationDataErrorHandler)
         {
             CheckCustomSerializer();
             
             return IsDataFileAccessible() &&
-                pedeData.IsDataValid(validationDataErrorHandler, pedeSettings.GetCustomSerializer());
+                pedData.IsDataValid(validationDataErrorHandler, pedSettings.GetCustomSerializer());
         }
 
         internal static bool HasCustomSerializerFile() =>
-            pedeSettings.HasCustomSerializerFile();
+            pedSettings.HasCustomSerializerFile();
         
         internal static bool IsCustomSerializerFileValid(
-            PedeSettings.ValidationSerializerErrorHandler validationSerializerErrorHandler) => 
-            pedeSettings.IsCustomSerializerFileValid(validationSerializerErrorHandler);
+            PedSettings.ValidationSerializerErrorHandler validationSerializerErrorHandler) => 
+            pedSettings.IsCustomSerializerFileValid(validationSerializerErrorHandler);
         
         internal static bool ShouldVerifyDataOnRunStart() =>
-            IsDataFileAccessible() && pedeSettings.ShouldVerifyDataOnRunStart();
+            IsDataFileAccessible() && pedSettings.ShouldVerifyDataOnRunStart();
 
         internal static bool ShouldRunAValidation()
         {
-            if (pedeSettings != null && pedeData != null)
+            if (pedSettings != null && pedData != null)
             {
-                if (pedeSettings.WasCustomSerializerChanged())
+                if (pedSettings.WasCustomSerializerChanged())
                 {
                     return true;
                 }
 
-                return pedeSettings.WasDataChanged() || pedeData.WasDataChanged();
+                return pedSettings.WasDataChanged() || pedData.WasDataChanged();
             }
             
             return false;
@@ -364,19 +364,19 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
 
         internal static void CleanDataChangFlag()
         {
-            if (pedeSettings != null && pedeData != null)
+            if (pedSettings != null && pedData != null)
             {
-                pedeSettings.CleanDataChangeFlag();
-                pedeData.CleanDataChangeFlag();
+                pedSettings.CleanDataChangeFlag();
+                pedData.CleanDataChangeFlag();
             }
         }
         
         internal static void ResetDataFlags()
         {
-            if (pedeSettings != null && pedeData != null)
+            if (pedSettings != null && pedData != null)
             {
-                pedeSettings.ResetDataFlag();
-                pedeData.ResetDataFlag();
+                pedSettings.ResetDataFlag();
+                pedData.ResetDataFlag();
             }
         }
 

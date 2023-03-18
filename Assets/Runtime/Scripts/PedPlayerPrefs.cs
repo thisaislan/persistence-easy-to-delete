@@ -1,12 +1,12 @@
 using System;
 using System.Linq;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Metas;
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Interfaces;
+using Thisaislan.PersistenceEasyToDelete.Metas;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize.Interfaces;
 using UnityEngine;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
+namespace Thisaislan.PersistenceEasyToDelete.PedComposition
 {
-    internal static class PedePlayerPrefs
+    internal static class PedPlayerPrefs
     {
         
         internal static void DeletePlayerPrefs(string key, bool shouldSaveImmediately)
@@ -32,13 +32,13 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
         internal static void SetPlayerPrefs<T>(
             string key,
             T value,
-            Pede.PlayerPrefsSetMode playerPrefsSetMode,
-            IPedeSerializer serializer
+            Ped.PlayerPrefsSetMode playerPrefsSetMode,
+            IPedSerializer serializer
         )
         {
             SetPlayerPrefs(key, value, serializer);
 
-            if (playerPrefsSetMode != Pede.PlayerPrefsSetMode.Normal)
+            if (playerPrefsSetMode != Ped.PlayerPrefsSetMode.Normal)
             {
                 SavePlayerPrefs();
             }
@@ -48,8 +48,8 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             string key,
             Action<T> actionIfHasResult,
             Action actionIfHasNotResult,
-            Pede.PlayerPrefsGetMode playerPrefsGetMode,
-            IPedeSerializer serializer
+            Ped.PlayerPrefsGetMode playerPrefsGetMode,
+            IPedSerializer serializer
         )
         {
             HasPlayerPrefsKey(key, (result) =>
@@ -58,15 +58,15 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
                 else { GetPlayerPrefs(key, actionIfHasResult, serializer); }
             });
 
-            if (playerPrefsGetMode != Pede.PlayerPrefsGetMode.Normal)
+            if (playerPrefsGetMode != Ped.PlayerPrefsGetMode.Normal)
             {
-                var shouldSaveImmediately = playerPrefsGetMode == Pede.PlayerPrefsGetMode.DestructiveAndPersistent;
+                var shouldSaveImmediately = playerPrefsGetMode == Ped.PlayerPrefsGetMode.DestructiveAndPersistent;
                 
                 DeletePlayerPrefs(key, shouldSaveImmediately);
             }
         }
         
-        private static void SetPlayerPrefs<T>(string key, T value, IPedeSerializer serializer)
+        private static void SetPlayerPrefs<T>(string key, T value, IPedSerializer serializer)
         {
             if (Metadata.BuildInTypes.Contains(typeof(T)))
             {
@@ -78,7 +78,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
             }
         }
         
-        private static void GetPlayerPrefs<T>(string key, Action<T> actionWithResult, IPedeSerializer serializer)
+        private static void GetPlayerPrefs<T>(string key, Action<T> actionWithResult, IPedSerializer serializer)
         {
             var value = PlayerPrefs.GetString(key, default);
             var decompressedValue = StringCompressor.DecompressString(value);
@@ -96,7 +96,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
         private static void GetPlayerPrefsObject<T>(
                     string decompressedValue,
                     Action<T> actionWithResult,
-                    IPedeSerializer serializer
+                    IPedSerializer serializer
                 ) => 
             actionWithResult.Invoke(serializer.Deserialize<T>(decompressedValue));
 

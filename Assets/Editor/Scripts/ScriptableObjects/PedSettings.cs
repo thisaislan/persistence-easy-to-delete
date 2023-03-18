@@ -1,43 +1,43 @@
 using System;
 using System.Reflection;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Constants;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Metas;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.PropertyAttributes;
+using Thisaislan.PersistenceEasyToDelete.Editor.Constants;
+using Thisaislan.PersistenceEasyToDelete.Editor.Metas;
+using Thisaislan.PersistenceEasyToDelete.Editor.PropertyAttributes;
 using UnityEditor;
 using UnityEngine;
 using Object = System.Object;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
+namespace Thisaislan.PersistenceEasyToDelete.Editor.ScriptableObjects
 {
-    [ClassTooltip(Consts.PedeSettingsClassTipAttr)]
-    internal class PedeSettings : ScriptableObject
+    [ClassTooltip(Consts.PedSettingsClassTipAttr)]
+    internal class PedSettings : ScriptableObject
     {
 
         [Space(Metadata.SettingsFirstFieldTopSpace)]
-        [Header(Consts.PedeSettingsDataHeaderAttr)]
-        [Tooltip(Consts.PedeSettingsDataTooltipAttr)]
+        [Header(Consts.PedSettingsDataHeaderAttr)]
+        [Tooltip(Consts.PedSettingsDataTooltipAttr)]
         [Space]
         [SerializeField]
         [OnChanged(nameof(ResetDataFlag))]
-        internal PedeData pedeData;
+        internal PedData pedData;
         
         [Space(Metadata.SettingsFieldTopSpace)]
-        [Header(Consts.PedeSettingsSerializerHeaderAttr)]
-        [Tooltip(Consts.PedeSettingsSerializerTooltipAttr)]
+        [Header(Consts.PedSettingsSerializerHeaderAttr)]
+        [Tooltip(Consts.PedSettingsSerializerTooltipAttr)]
         [Space]
         [SerializeField]
         [OnChanged(nameof(CustomSerializerWasChanged))]
         private MonoScript customSerializer;
 
-        [Tooltip(Consts.PedeSettingsSerializerPathTooltipAttr)]
-        [PedeSerialize.PropertyAttributes.ReadOnly]
+        [Tooltip(Consts.PedSettingsSerializerPathTooltipAttr)]
+        [PedSerialize.PropertyAttributes.ReadOnly]
         [Space]
         [SerializeField]
         private string customSerializerPath;
 
         [Space(Metadata.SettingsFieldTopSpace)]
-        [Header(Consts.PedeSettingsSettingsHeaderAttr)]
-        [Tooltip(Consts.PedeSettingsVerifyOnStartTooltipAttr)]
+        [Header(Consts.PedSettingsSettingsHeaderAttr)]
+        [Tooltip(Consts.PedSettingsVerifyOnStartTooltipAttr)]
         [Space]
         [SerializeField]
         private bool verifyDataOnRunStart = true;
@@ -130,7 +130,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
         
         private void PersistAsset()
         {
-            PedeEditor.PersistAsset(this);
+            PedEditor.PersistAsset(this);
         }
 
         private bool CheckSerializeEncapsulation(ValidationSerializerErrorHandler validationSerializerErrorHandler)

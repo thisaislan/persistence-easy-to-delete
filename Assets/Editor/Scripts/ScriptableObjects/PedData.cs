@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Constants;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Metas;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.PropertyAttributes;
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize;
-using Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Interfaces;
+using Thisaislan.PersistenceEasyToDelete.Editor.Constants;
+using Thisaislan.PersistenceEasyToDelete.Editor.Metas;
+using Thisaislan.PersistenceEasyToDelete.Editor.PropertyAttributes;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize;
+using Thisaislan.PersistenceEasyToDelete.PedSerialize.Interfaces;
 using UnityEditor;
 using UnityEngine;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
+namespace Thisaislan.PersistenceEasyToDelete.Editor.ScriptableObjects
 {
     [
         CreateAssetMenu(
@@ -20,8 +20,8 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
             order = Metadata.AssetMenuDataOrder
         )
     ]
-    [ClassTooltip(Consts.PedeDataClassTipAttr)]
-    internal class PedeData : ScriptableObject
+    [ClassTooltip(Consts.PedDataClassTipAttr)]
+    internal class PedData : ScriptableObject
     {
 
         [Serializable]
@@ -45,26 +45,26 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
         }
 
         [SerializeField]
-        [Header(Consts.PedeDataSettingsHeaderAttr)]
-        [Tooltip(Consts.PedeDataAvoidChangesTooltipAttr)]
+        [Header(Consts.PedDataSettingsHeaderAttr)]
+        [Tooltip(Consts.PedDataAvoidChangesTooltipAttr)]
         [Space]
         private bool avoidChanges;
         
         [SerializeField]
         [Space(Metadata.DefaultFieldDataTopSpace)]
-        [Tooltip(Consts.PedeDataPlayerPrefsTooltipAttr)]
-        [Header(Consts.PedeDataHeaderAttr)]
+        [Tooltip(Consts.PedDataPlayerPrefsTooltipAttr)]
+        [Header(Consts.PedDataHeaderAttr)]
         [Space]
         internal List<Data> playerPrefData = new List<Data>();
         
         [SerializeField]
         [Space(Metadata.DefaultFieldDataTopSpace)]
-        [Tooltip(Consts.PedeDataFileToolTipAttr)]
+        [Tooltip(Consts.PedDataFileToolTipAttr)]
         internal List<Data> fileData = new List<Data>();
 
         [SerializeField]
         [Space(Metadata.DefaultFieldDataTopSpace)]
-        [Tooltip(Consts.PedeDataFileInfoAttr)]
+        [Tooltip(Consts.PedDataFileInfoAttr)]
         private Info info = new Info();
 
         private List<Data> playerPrefDataBackup;
@@ -97,7 +97,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
 
         #region PlayerPrefsRegion
 
-        internal void SetPlayerPrefs<T>(string key, T value, IPedeSerializer serializer)
+        internal void SetPlayerPrefs<T>(string key, T value, IPedSerializer serializer)
         {
             CheckKeyAsNull(key);
             CheckValueAsNull(value);
@@ -123,7 +123,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
         internal void GetPlayerPrefs<T>(
             string key,
             Action<T> actionIfHasResult,
-            IPedeSerializer serializer,
+            IPedSerializer serializer,
             Action actionIfHasNotResult = null,
             bool destroyAfter = false
         )
@@ -174,7 +174,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
             PersistAsset();
         }
 
-        private Data CreatePlayerPrefsData<T>(string key, T value, IPedeSerializer serializer) =>
+        private Data CreatePlayerPrefsData<T>(string key, T value, IPedSerializer serializer) =>
             new Data
             {
                 key = key,
@@ -182,13 +182,13 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
                 value = GetPlayerPrefsValue(value, serializer)
             };
         
-        private string GetPlayerPrefsValue<T>(T value, IPedeSerializer serializer)
+        private string GetPlayerPrefsValue<T>(T value, IPedSerializer serializer)
         {
             if (Metadata.BuildInTypes.Contains(typeof(T))) { return Convert.ToString(value); }
             else { return serializer.Serialize(value); }
         }
 
-        private void GetPlayerPrefsData<T>(string value, Action<T> actionWithResult, IPedeSerializer serializer)
+        private void GetPlayerPrefsData<T>(string value, Action<T> actionWithResult, IPedSerializer serializer)
         {
             if (Metadata.BuildInTypes.Contains(typeof(T)))
             {
@@ -217,7 +217,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
         
         private bool IsPlayerPrefsDataValuesValid(
             ValidationDataErrorHandler validationDataErrorHandler,
-            PedeSettings.CustomSerializer customSerializer
+            PedSettings.CustomSerializer customSerializer
         )
         {
             var dataIsValid = true;
@@ -280,7 +280,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
         
         #region FileRegion
         
-        internal void SetFile<T>(string key, T value, IPedeSerializer serializer)
+        internal void SetFile<T>(string key, T value, IPedSerializer serializer)
         {
             CheckKeyAsNull(key);
             CheckValueAsNull(value);
@@ -307,7 +307,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
         internal void GetFile<T>(
             string key,
             Action<T> actionIfHasResult,
-            IPedeSerializer serializer,
+            IPedSerializer serializer,
             Action actionIfHasNotResult = null,
             bool destroyAfter = false
         )
@@ -364,13 +364,13 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
         private void RemoveFile<T>(string key) =>
             RemoveData(fileData, key, GetTypeName(typeof(T)));
         
-        private void GetFileData<T>(string value, Action<T> actionWithResult, IPedeSerializer serializer) =>
+        private void GetFileData<T>(string value, Action<T> actionWithResult, IPedSerializer serializer) =>
             GetObject(serializer.Deserialize<T>(value), actionWithResult);
 
         private Data GetFirstFileDataOrDefault<T>(string key) =>
             GetFirstDataOrDefault(fileData, key, GetTypeName(typeof(T)));
         
-        private Data CreateFileData<T>(string key, T value, IPedeSerializer serializer) =>
+        private Data CreateFileData<T>(string key, T value, IPedSerializer serializer) =>
             new Data
             {
                 key = key,
@@ -380,7 +380,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
         
         private bool IsFileDataValuesValid(
             ValidationDataErrorHandler validationDataErrorHandler,
-            PedeSettings.CustomSerializer customSerializer
+            PedSettings.CustomSerializer customSerializer
         )
         {
             var dataIsValid = true;
@@ -427,7 +427,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
 
         internal bool IsDataValid(
             ValidationDataErrorHandler validationDataErrorHandler,
-            PedeSettings.CustomSerializer customSerializer
+            PedSettings.CustomSerializer customSerializer
         )   
         {
             var isPlayerPrefsDataTypesValid = IsPlayerPrefsDataTypesValid(validationDataErrorHandler);
@@ -594,10 +594,10 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
 
         private void PersistAsset()
         {
-            if (!avoidChanges) { PedeEditor.PersistAsset(this); }
+            if (!avoidChanges) { PedEditor.PersistAsset(this); }
         }
 
-        private void InvokeDeserializeMethodAsAbstract(PedeSettings.CustomSerializer customSerializer, Data data)
+        private void InvokeDeserializeMethodAsAbstract(PedSettings.CustomSerializer customSerializer, Data data)
         {
             MethodInfo method = null;
             object obj = null;
@@ -612,7 +612,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
             }
             else
             {
-                var defaultSerializer = new DefaultPedeSerializer();
+                var defaultSerializer = new DefaultPedSerializer();
                 
                 methodName = nameof(defaultSerializer.Deserialize);
                 obj = defaultSerializer;
@@ -698,23 +698,23 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
             private struct DataInfo
             {
                 [SerializeField]
-                [PedeSerialize.PropertyAttributes.ReadOnly]
+                [PedSerialize.PropertyAttributes.ReadOnly]
                 internal float sizeInBytes;
             
                 [SerializeField]
-                [PedeSerialize.PropertyAttributes.ReadOnly]
+                [PedSerialize.PropertyAttributes.ReadOnly]
                 internal int getsInTheLastRun;
 
                 [SerializeField]
-                [PedeSerialize.PropertyAttributes.ReadOnly]
+                [PedSerialize.PropertyAttributes.ReadOnly]
                 internal int setsInTheLastRun;
             
                 [SerializeField]
-                [PedeSerialize.PropertyAttributes.ReadOnly]
+                [PedSerialize.PropertyAttributes.ReadOnly]
                 internal int deleteInTheLastRun;
                 
                 [SerializeField]
-                [PedeSerialize.PropertyAttributes.ReadOnly]
+                [PedSerialize.PropertyAttributes.ReadOnly]
                 internal int hasKeyInTheLastRun;
                 
                 internal void CleanLastRunData()
@@ -728,19 +728,19 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
             }
             
             [SerializeField]
-            [PedeSerialize.PropertyAttributes.ReadOnly]
+            [PedSerialize.PropertyAttributes.ReadOnly]
             private string createdIn;
             
             [SerializeField]
-            [PedeSerialize.PropertyAttributes.ReadOnly]
+            [PedSerialize.PropertyAttributes.ReadOnly]
             private string createdBy;
 
             [SerializeField]
-            [PedeSerialize.PropertyAttributes.ReadOnly]
+            [PedSerialize.PropertyAttributes.ReadOnly]
             private int numberOfUses;
             
             [SerializeField]
-            [PedeSerialize.PropertyAttributes.ReadOnly]
+            [PedSerialize.PropertyAttributes.ReadOnly]
             private float totalSizeInBytes;
 
             [Space]
@@ -793,20 +793,20 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects
             internal void UpdateFileNumberOfHasKeyInTheLastRun() =>
                 fileDataInfo.hasKeyInTheLastRun++;
             
-            internal void UpdateSize(PedeData pedeData)
+            internal void UpdateSize(PedData pedData)
             {
-                if (pedeData.playerPrefData != null && pedeData.playerPrefData.Count != 0)
+                if (pedData.playerPrefData != null && pedData.playerPrefData.Count != 0)
                 {
-                    playerPrefsDataInfo.sizeInBytes = GetDataSizeInBytes(pedeData.playerPrefData);
+                    playerPrefsDataInfo.sizeInBytes = GetDataSizeInBytes(pedData.playerPrefData);
                 }
                 else
                 {
                     playerPrefsDataInfo.sizeInBytes = 0;
                 }
                 
-                if (pedeData.fileData != null && pedeData.fileData.Count != 0)
+                if (pedData.fileData != null && pedData.fileData.Count != 0)
                 {
-                    fileDataInfo.sizeInBytes = GetDataSizeInBytes(pedeData.fileData);
+                    fileDataInfo.sizeInBytes = GetDataSizeInBytes(pedData.fileData);
                 }
                 else
                 {

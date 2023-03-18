@@ -1,31 +1,31 @@
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Constants;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Metas;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Editor.ScriptableObjects;
+using Thisaislan.PersistenceEasyToDelete.Editor.Constants;
+using Thisaislan.PersistenceEasyToDelete.Editor.Metas;
+using Thisaislan.PersistenceEasyToDelete.Editor.ScriptableObjects;
 using UnityEditor;
 using UnityEngine;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
+namespace Thisaislan.PersistenceEasyToDelete.Editor
 {
-    internal static class PedeEditorMenu
+    internal static class PedEditorMenu
     {
         
         #region ValidateRegion
         
         [MenuItem(Metadata.MenuItemOpenData + Metadata.MenuItemOpenDataShortcut, true)]
         private static bool OpenDataValidate() =>
-            PedeEditor.IsDataFileAccessible();
+            PedEditor.IsDataFileAccessible();
         
         [MenuItem(Metadata.MenuItemValidateData + Metadata.MenuItemValidateDataShortcut, true)]
         private static bool ValidateDataValidate() => 
-            PedeEditor.IsDataFileAccessible();
+            PedEditor.IsDataFileAccessible();
         
         [MenuItem(Metadata.MenuItemOpenSettings + Metadata.MenuItemOpenSettingsShortcut, true)]
         private static bool ValidateOpenSettings() => 
-            PedeEditor.IsDataFileAccessible();
+            PedEditor.IsDataFileAccessible();
         
         [MenuItem(Metadata.MenuItemDeleteData, true)]
         private static bool DeleteDataValidate() => 
-            PedeEditor.IsDataFileAccessible();
+            PedEditor.IsDataFileAccessible();
 
         #endregion // ValidateRegion
         
@@ -34,7 +34,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         [MenuItem(Metadata.MenuItemNewData, priority = Metadata.MenuItemNewDataPriority)]
         private static void NewData()
         {
-            PedeEditor.CreateAnotherDataFile();
+            PedEditor.CreateAnotherDataFile();
             
             ShowValidationWarningMessageOnConsole(
                 $"{Consts.DebugMessageSuffix} " +
@@ -46,7 +46,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
             Metadata.MenuItemOpenData + Metadata.MenuItemOpenDataShortcut,
             priority = Metadata.MenuItemOpenDataOptionPriority)]
         private static void OpenData() =>
-            PedeEditor.SelectDataFile();
+            PedEditor.SelectDataFile();
 
         [MenuItem(
             Metadata.MenuItemValidateData + Metadata.MenuItemValidateDataShortcut,
@@ -57,14 +57,14 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         [MenuItem(Metadata.MenuItemOpenSettings + Metadata.MenuItemOpenSettingsShortcut, 
             priority = Metadata.MenuItemOpenSettingsPriority)]
         private static void OpenSettings() => 
-            PedeEditor.SelectSettingsFile();
+            PedEditor.SelectSettingsFile();
         
         [MenuItem(Metadata.MenuItemDeleteData, priority = Metadata.MenuItemDeleteDataPriority)]
         private static void DeleteData()
         {
             if (ShouldDelete())
             {
-                PedeEditor.DeleteDataFile();
+                PedEditor.DeleteDataFile();
                 
                 ShowValidationWarningMessageOnConsole(
                     $"{Consts.DebugMessageSuffix} " +
@@ -80,7 +80,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         [InitializeOnEnterPlayMode]
         private static void CheckValidateDataOnRunStart()
         {
-            if (PedeEditor.ShouldVerifyDataOnRunStart() && PedeEditor.ShouldRunAValidation())
+            if (PedEditor.ShouldVerifyDataOnRunStart() && PedEditor.ShouldRunAValidation())
             {
                 RunDataValidation(false);
             }
@@ -94,7 +94,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
         {
             ShowValidationWarningMessageOnConsole($"{Consts.DebugMessageSuffix} {Consts.ValidationLogMessage}");
             
-            if (PedeEditor.HasCustomSerializerFile())
+            if (PedEditor.HasCustomSerializerFile())
             {
                 ShowValidationWarningMessageOnConsole($"{Consts.DebugMessageSuffix} {Consts.ValidationWarningMessage}");
                 
@@ -117,7 +117,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
                     $"{Consts.MenuItemValidationDialogSuccessMessage}"
                 );
                 
-                PedeEditor.CleanDataChangFlag();
+                PedEditor.CleanDataChangFlag();
             }
         }
 
@@ -138,8 +138,8 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
             );
         
         private static bool IsCustomSerializerFileValid() =>
-            PedeEditor.IsCustomSerializerFileValid(
-                new PedeSettings.ValidationSerializerErrorHandler(
+            PedEditor.IsCustomSerializerFileValid(
+                new PedSettings.ValidationSerializerErrorHandler(
                     ShowValidationSerializerMethodNotFound,
                     ShowValidationSerializerClassError,
                     ShowValidationSerializerInterfaceError
@@ -147,8 +147,8 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor
             );
 
         private static bool IsDataValid() =>
-            PedeEditor.IsDataValid(
-                new PedeData.ValidationDataErrorHandler(
+            PedEditor.IsDataValid(
+                new PedData.ValidationDataErrorHandler(
                     ShowValidationErrorDataValueMessage,
                     ShowValidationErrorDataKeyMessage,
                     ShowValidationErrorDataTypeMessage

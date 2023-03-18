@@ -2,9 +2,9 @@ using System;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
-using Thisaislan.PersistenceEasyToDeleteInEditor.Metas;
+using Thisaislan.PersistenceEasyToDelete.Metas;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeComposition
+namespace Thisaislan.PersistenceEasyToDelete.PedComposition
 {
     internal static class StringCompressor
     {

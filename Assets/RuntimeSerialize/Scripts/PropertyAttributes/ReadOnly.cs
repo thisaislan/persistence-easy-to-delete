@@ -3,7 +3,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.PropertyAttributes
+namespace Thisaislan.PersistenceEasyToDelete.PedSerialize.PropertyAttributes
 {
     public class ReadOnly : PropertyAttribute { }
     

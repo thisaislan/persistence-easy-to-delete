@@ -1,14 +1,14 @@
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.PedeSerialize.Metas
+namespace Thisaislan.PersistenceEasyToDelete.PedSerialize.Metas
 {
     internal static class Metadata
     {
         
 #if UNITY_EDITOR
         internal const string EditorAssemblyNameInternalsVisibleTo = 
-                                                                "Thisaislan.PersistenceEasyToDeleteInEditor.PedeEditor";
+                                                                "Thisaislan.PersistenceEasyToDelete.PedEditor";
 #endif
         internal const string RuntimeAssemblyNameInternalsVisibleTo =
-                                                                    "Thisaislan.PersistenceEasyToDeleteInEditor.Pede";
+                                                                    "Thisaislan.PersistenceEasyToDelete.Ped";
     
     }
 }

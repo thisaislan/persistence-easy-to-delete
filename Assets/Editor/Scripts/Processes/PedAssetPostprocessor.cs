@@ -2,9 +2,9 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
 
-namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Processes
+namespace Thisaislan.PersistenceEasyToDelete.Editor.Processes
 {
-    internal class PedeAssetPostprocessor : AssetPostprocessor
+    internal class PedAssetPostprocessor : AssetPostprocessor
     {
 
         private static void OnPostprocessAllAssets(
@@ -14,7 +14,7 @@ namespace Thisaislan.PersistenceEasyToDeleteInEditor.Editor.Processes
             string[] movedFromAssetPaths
         )
         {
-            PedeEditor.CheckInitialization();
+            PedEditor.CheckInitialization();
         }
 
     }
