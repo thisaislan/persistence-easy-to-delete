@@ -1,6 +1,6 @@
 {
     "name": "thisaislan.persistenceeasytodelete",
-    "version": "4.0.0",
+    "version": "4.0.1",
     "displayName": "Ped",
     "description": "Persistence easy to delete, or just Ped, is a small library to facilitate common persistence handling in the Unity editor.",
     "documentationUrl": "https://github.com/thisaislan/persistence-easy-to-delete",

@@ -1,5 +1,8 @@
 # Changelog
 
+#### v4.0.1:
+- Add conditions to run PedAssetPostprocessor check
+
 #### v4.0.0:
 - Rename Ped the old name is a pejorative word in French. Thank you Calm_Astronomer2930 from Reedit for informing me of this
 

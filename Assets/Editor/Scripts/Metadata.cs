@@ -50,6 +50,8 @@ namespace Thisaislan.PersistenceEasyToDelete.Editor.Metas
         internal const string SerializerDeserializeMethodName = "Deserialize";
         internal const string SerializerInterfaceName = nameof(IPedSerializer);
 
+        internal const string PackageFolderName = "persistenceeasytodelete";
+
         internal static Type[] BuildInTypes =
         {
             typeof(bool), typeof(byte), typeof(sbyte), typeof(char), typeof(decimal), typeof(double), typeof(float),
