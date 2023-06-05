@@ -50,7 +50,8 @@ namespace Thisaislan.PersistenceEasyToDelete.Editor.Constants
                                                                   "\nNote that file must contain only one a " +
                                                                   "public class, the class must have a unique name " +
                                                                   "and implement " + nameof(IPedSerializer) + 
-                                                                  " interface.";
+                                                                  " interface, also this class cannot be inside a " +
+                                                                  "custom assembly.";
         internal const string PedSettingsSerializerPathTooltipAttr = "Custom serializer file path";
         internal const string PedSettingsSettingsHeaderAttr = "Select the desired behavior";
         internal const string PedSettingsVerifyOnStartTooltipAttr = "Set this flag to true if you want Ped to " +

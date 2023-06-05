@@ -1,5 +1,8 @@
 # Changelog
 
+#### v4.0.2:
+- Add instructions about serializer class and custom assembly 
+
 #### v4.0.1:
 - Add conditions to run PedAssetPostprocessor check
 
