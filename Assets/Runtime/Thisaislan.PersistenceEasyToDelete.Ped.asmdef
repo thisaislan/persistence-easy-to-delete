@@ -1,9 +1,6 @@
 {
     "name": "Thisaislan.PersistenceEasyToDelete.Ped",
-    "references": [
-        "Thisaislan.PersistenceEasyToDelete.PedEditor",
-        "Thisaislan.PersistenceEasyToDelete.Ped.Serialize"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

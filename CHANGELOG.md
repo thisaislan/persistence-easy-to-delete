@@ -1,5 +1,13 @@
 # Changelog
 
+#### v5.0.0:
+- Remove PedSettings; the active PedData is now marked by a flag on the PedData itself
+- Add automatic single-selection: enabling the in-use flag on a PedData disables it on the others
+- Merge all serialization code into the main Ped assembly, removing the separate serialization assembly
+- Improve runtime decompression to be safer against empty or corrupted stored values
+- Add data validation with a JSON syntax checker on the PedData inspector
+- General code cleanup and improviment
+
 #### v4.0.2:
 - Add instructions about serializer class and custom assembly 
 
